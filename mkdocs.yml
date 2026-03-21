@@ -1,0 +1,65 @@
+site_name: Wolfgang.Etl Framework Documentation
+site_url: https://Chris-Wolfgang.github.io/ETL-Documentation/
+site_description: Comprehensive guides, architecture, and cookbook for the Wolfgang.Etl framework
+site_author: Chris Wolfgang
+
+repo_name: Chris-Wolfgang/ETL-Documentation
+repo_url: https://github.com/Chris-Wolfgang/ETL-Documentation
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Your First Extractor: getting-started/your-first-extractor.md
+    - Your First Loader: getting-started/your-first-loader.md
+  - Libraries:
+    - FixedWidth: libraries/fixedwidth.md
+    - DbClient: libraries/dbclient.md
+    - XML: libraries/xml.md
+    - JSON: libraries/json.md
+  - Guides:
+    - Pipeline Composition: guides/pipeline-composition.md
+    - Error Handling: guides/error-handling.md
+    - Progress Reporting: guides/progress-reporting.md
+    - Custom Parsers & Converters: guides/custom-parsers.md
+    - Performance: guides/performance.md
+  - Cookbook:
+    - File to Database: cookbook/file-to-database.md
+    - Database to File: cookbook/database-to-file.md
+    - Transform Chains: cookbook/transform-chains.md
