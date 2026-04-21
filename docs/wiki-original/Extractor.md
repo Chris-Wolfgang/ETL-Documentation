@@ -288,21 +288,14 @@ frequency of updates in a UI.
 
 ### SkipItemCount
 The number of items to skip before returning items.
-This property can be used to limit the number of items extracted, 
-which is useful for testing or when only a subset of data is needed.
+This property can be used to ignore the first N items, which is useful
+for resuming partway through a source or when only a subset of data is needed.
 
 #### Property Value
 [`int`](https://learn.microsoft.com/en-us/dotnet/api/system.int32) The number of items to skip.
 
 #### Default Value
-0
-
-[`int.MaxValue`](https://learn.microsoft.com/en-us/dotnet/api/system.int32.maxvalue) This means that by default there is no limit on the number of items extracted.
-
->If you are trying to extract a large number of items, you are limited to 
-the maximum value of a 32-bit integer, which is 2,147,483,647. If you need 
-to extract more than this number of items, you will need to implement your own logic 
-to handle this.
+0 -- meaning no items are skipped. All items read from the source are returned.
 
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
