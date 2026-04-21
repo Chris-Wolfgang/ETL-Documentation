@@ -22,6 +22,45 @@ Your source project needs:
 ```
 
 
+## Interfaces vs. the Base Class
+
+There are two ways to build a loader:
+
+1. **Inherit from `LoaderBase<TDestination, TProgress>`** -- the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `LoadWorkerAsync` method. This guide focuses on this path.
+2. **Implement one of the loader interfaces directly** -- for full control. You get to decide exactly how every piece of the loader behaves, at the cost of implementing everything yourself.
+
+### The Four Loader Interfaces
+
+The loader interfaces form a diamond -- start with `ILoadAsync<TDestination>` and add only the capabilities you need:
+
+```
+            ILoadAsync<TDestination>
+                  /        \
+                 /          \
+ILoadWithCancellation    ILoadWithProgress
+     Async<T>             Async<T, TProgress>
+                 \          /
+                  \        /
+       ILoadWithProgressAndCancellation
+                Async<T, TProgress>
+```
+
+| Interface | What it adds |
+|-----------|--------------|
+| `ILoadAsync<TDestination>` | `LoadAsync(IAsyncEnumerable<TDestination>)` -- the bare minimum |
+| `ILoadWithCancellationAsync<TDestination>` | Adds a `CancellationToken` overload |
+| `ILoadWithProgressAsync<TDestination, TProgress>` | Adds an `IProgress<TProgress>` overload |
+| `ILoadWithProgressAndCancellationAsync<TDestination, TProgress>` | Adds an overload with both |
+
+The cancellation and progress interfaces both inherit from `ILoadAsync<TDestination>`. The combined interface inherits from both, which is the diamond. Implement only the interface your loader actually needs -- a loader that does not meaningfully support cancellation should not implement a cancellation interface.
+
+### When to Use the Base Class
+
+Use `LoaderBase<TDestination, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, honors `SkipItemCount` and `MaximumItemCount` consistently, and gives you the timer-injection pattern needed to test progress reporting (see [TestKit](TestKit)).
+
+Hand-implementing the interfaces is valid and supported -- for example, if you are wrapping a third-party writer with its own async loop and cannot match the base-class lifecycle -- but you are responsible for matching the contract that other loaders implement. The contract test base classes in [TestKit.Xunit](TestKit) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
+
+
 ## Step 1: Define Your Progress Report
 
 Reuse the same progress report as your extractor if they share a library, or create a new one:

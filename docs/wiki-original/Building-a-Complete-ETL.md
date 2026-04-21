@@ -43,7 +43,11 @@ public record DestinationContact
 
 ## Building the Transformer
 
-The transformer converts `TSource` to `TDestination`. It inherits from `TransformerBase<TSource, TDestination, TProgress>`:
+The transformer converts `TSource` to `TDestination`. The recommended way to build one is to inherit from `TransformerBase<TSource, TDestination, TProgress>`, which handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `TransformWorkerAsync` method. That is what this guide does.
+
+Inheritance from the base class is **optional**. The same choice exists for extractors and loaders -- see [Building an Extractor](Building-an-Extractor) and [Building a Loader](Building-a-Loader) for the full "Interfaces vs. the Base Class" discussion. You can implement any of the four transformer interfaces (`ITransformAsync`, `ITransformWithCancellationAsync`, `ITransformWithProgressAsync`, `ITransformWithProgressAndCancellationAsync`) directly if you need full control over how the transformer behaves. The four interfaces form the same diamond shape as the extractor and loader interfaces, with the base interface adding only `TransformAsync(IAsyncEnumerable<TSource>)` and each subsequent interface adding cancellation, progress, or both.
+
+The remainder of this guide uses `TransformerBase<TSource, TDestination, TProgress>`:
 
 ```csharp
 public class PersonToContactTransformer
