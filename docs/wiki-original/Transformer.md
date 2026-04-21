@@ -4,17 +4,36 @@ data from the source format, `TSource`, to the destination format, `TDestination
 
 
 ## Requirements 
-1. A transformer should be implemented in a generic way, allowing 
-   it to be reused for different types of ETL processes. For example,
-   a transformer could convert a customer from your ERP system to 
-   an account in your CRM system by mapping fields from one type to another
-   and converting values from one system to values for the other system. 
-   > Transformers should be written such that they can be used by other ETLs. 
-   However, usually this will be context specific and may not be 
-   reusable across different ETL processes. 
-   To help with this, it is recommended that you create many
-   smaller transformers that your can string together, where the ouput from
-   one is the input to the next. 
+1. A transformer is usually **application-specific**, not generic.
+   The mapping from `ErpCustomer` to `CrmAccount` is inherently
+   particular to your ETL -- which fields map where, how values are
+   translated between systems, what defaults apply when a field is
+   missing. Trying to force a single generic transformer to cover
+   these variations usually produces an abstraction that fits no
+   real use case well.
+
+   The pattern for reuse is not one giant generic transformer but
+   many small focused ones that compose through shared intermediate
+   types. For example, address validation is genuinely generic:
+
+   ```
+   ErpAddress --(ErpAddressToAddress)--> Address --(AddressValidator)--> Address --(AddressToErpAddress)--> ErpAddress
+   CrmAddress --(CrmAddressToAddress)--> Address --(AddressValidator)--> Address --(AddressToCrmAddress)--> CrmAddress
+   ```
+
+   The `AddressValidator` in the middle is reusable across every
+   ETL that works with addresses. The shape-conversion transformers
+   on either side are application-specific and small enough to be
+   easy to write and test.
+
+   Use `MultistepTransformer` to compose a chain like this into a
+   single transformer you can hand to the loader -- see
+   [Building a Complete ETL](Building-a-Complete-ETL#chaining-transformers).
+
+   > Generic transformers that are broadly reusable (validators,
+   > format converters, pass-through / no-op) live in
+   > `Wolfgang.Etl.Transformers`. This package is under active
+   > development -- see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
 1. Each `transformer<TSource, TDestination>` should be interchangeable 
    for any other `transformer<TSource, TDestination>`, where TSource and 
    TDestination are of the same type. This allows your application to 
