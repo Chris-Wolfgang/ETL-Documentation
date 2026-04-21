@@ -236,27 +236,33 @@ Because all extractors implement the same interfaces, you can swap data sources 
 // Read from JSONL
 var extractor = new JsonLineExtractor<SourcePerson>(jsonStream, logger);
 
-// Or read from a JSON array -- same TRecord, different source format
-var extractor = new JsonSingleStreamExtractor<SourcePerson>(jsonStream, logger);
+// Or read from an XML file -- same TRecord, different source format
+var extractor = new XmlSingleStreamExtractor<SourcePerson>(xmlStream, xmlOptions, logger);
 
-// Or read from multiple JSON files -- same TRecord, different I/O model
-var extractor = new JsonMultiStreamExtractor<SourcePerson>(fileStreams, logger);
+// Or read from a database -- same TRecord, totally different source model
+var extractor = new DbExtractor<SourcePerson>
+(
+    connection,
+    "SELECT first_name, last_name, date_of_birth FROM persons",
+    logger: logger
+);
 ```
 
-The transformer and loader do not care where the data came from. Similarly, you can swap the loader:
+The transformer and loader do not care where the data came from -- file, stream, or database. Similarly, you can swap the loader:
 
 ```csharp
 // Write to JSONL
 var loader = new JsonLineLoader<DestinationContact>(stream, logger);
 
-// Or write to a JSON array
-var loader = new JsonSingleStreamLoader<DestinationContact>(stream, logger);
+// Or write to an XML file -- same TDestination, different destination format
+var loader = new XmlSingleStreamLoader<DestinationContact>(stream, xmlOptions, logger);
 
-// Or write each item to its own file
-var loader = new JsonMultiStreamLoader<DestinationContact>
+// Or write to a database -- same TDestination, totally different destination model
+var loader = new DbLoader<DestinationContact>
 (
-    contact => File.Create($"output/{contact.FullName}.json"),
-    logger
+    connection,
+    WriteMode.Insert,
+    logger: logger
 );
 ```
 
@@ -273,7 +279,36 @@ Unhandled exceptions propagate up through the async enumeration chain and surfac
 
 ## Testing the Pipeline
 
-Test each component in isolation using the contract test base classes from [TestKit](TestKit), then write a small integration test that wires them together:
+Test the pipeline at two levels: each component in isolation (unit tests), and the components wired together (integration tests).
+
+### Unit testing each component
+
+Each extractor, transformer, and loader should have its own unit-test class that verifies it in isolation from the rest of the pipeline. Use the contract test base classes from `Wolfgang.Etl.TestKit.Xunit` -- inheriting from them gives you 20+ test cases verifying that your component honors the contract shared by every component built on the Abstractions base classes.
+
+```csharp
+public class PersonToContactTransformerTests
+    : TransformerBaseContractTests<PersonToContactTransformer, SourcePerson, Report>
+{
+    protected override PersonToContactTransformer CreateSut(int itemCount)
+        => new();
+
+    protected override IReadOnlyList<SourcePerson> CreateExpectedItems()
+        => Enumerable.Range(0, 5)
+            .Select(i => new SourcePerson { first_name = $"F{i}", last_name = $"L{i}" })
+            .ToList();
+
+    protected override PersonToContactTransformer CreateSutWithTimer(IProgressTimer timer)
+        => new(timer);
+}
+```
+
+That's the entire test class. The base class runs every contract assertion against it.
+
+For the full TestKit API -- contract test base classes, test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), and the timer injection pattern needed for progress tests -- see [TestKit](TestKit).
+
+### Integration testing the pipeline
+
+Unit tests verify each component behaves correctly on its own. Integration tests verify the components actually wire together and produce the right end-to-end result:
 
 ```csharp
 [Fact]
@@ -315,6 +350,8 @@ public async Task Pipeline_extracts_transforms_and_loads()
     Assert.Contains("Alice Smith", output);
 }
 ```
+
+Keep integration tests small -- a handful of end-to-end cases that confirm the pipeline is wired correctly. The heavy lifting (boundary conditions, cancellation, progress, skip/max counts) is already covered by the component-level contract tests.
 
 
 ## See Also
