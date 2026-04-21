@@ -82,11 +82,7 @@ none
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1)
  An asynchronous stream of items of type TSource, representing the extracted data.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
     
@@ -111,11 +107,7 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 
@@ -142,11 +134,7 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 ## IExtractWithProgressAndCancellationAsync\<TSource, TProgress\>
@@ -175,11 +163,7 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 # Base Classes
@@ -232,11 +216,7 @@ The current number of items that have been extracted. This property is updated a
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### MaximumItemCount
@@ -256,11 +236,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### ReportingInterval
@@ -279,11 +255,7 @@ frequency of updates in a UI.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 1.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### SkipItemCount
@@ -307,11 +279,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -379,8 +347,4 @@ Extracts data from the source by enumerating it asynchronously periodically repo
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) Thrown when the `progress` parameter is null.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0

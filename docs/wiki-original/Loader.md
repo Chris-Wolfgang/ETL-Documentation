@@ -63,11 +63,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task)
 A task that represents the asynchronous operation. The task will complete when all items have been written to the destination. 
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 ## ILoadWithCancellationAsync
@@ -95,11 +91,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task)
 A task that represents the asynchronous operation. The task will complete when all items have been written to the destination. 
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 
@@ -130,11 +122,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task)
 A task that represents the asynchronous operation. The task will complete when all items have been written to the destination. 
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -166,11 +154,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task)
 A task that represents the asynchronous operation. The task will complete when all items have been written to the destination. 
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
     
@@ -203,11 +187,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task)
 A task that represents the asynchronous operation. The task will complete when all items have been written to the destination. 
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -264,11 +244,7 @@ The current number of items that have been loaded. This property is updated as i
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -290,11 +266,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### ReportingInterval
@@ -313,11 +285,7 @@ frequency of updates in a UI.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 1.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### SkipItemCount
@@ -341,11 +309,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -428,8 +392,4 @@ A task that represents the asynchronous operation. The task will complete when a
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) Thrown when the `progress` parameter is null.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
