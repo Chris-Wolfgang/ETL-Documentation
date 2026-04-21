@@ -26,8 +26,28 @@ data to the final destination.
    may occur during the loading process, including but not limited 
    to network issues, permissions issues, space full issues,
    and destination unavailability. 
+1. The loader should be resilient and capable of retrying operations
+   in case of transient failures.
 1. The data is passed to the loader as an `asynchronous` stream of type 
    `TDestination`, allowing for efficient processing by the loader.
+   Whenever possible, the loader should write 1 item at a time.
+
+   >For performance reasons it may be necessary to buffer items and
+   write them in small batches. However, the loader should not
+   accumulate large amounts of data in memory before writing.
+   For example, a loader that writes to a CSV file may find it more
+   efficient to flush a few rows at a time, but should not hold
+   the entire dataset in memory before writing, as some pipelines
+   may contain gigabytes of data.
+1. The loader should **not** do any transformation of the data.
+   Transforming the data is the responsibility of the transformer.
+   Its sole responsibility is to write data to the destination.
+   >Occasionally, some minimal transformation may be necessary to
+   ensure the data is in a suitable format for the destination.
+   For example, a CSV loader might serialize each record to a
+   delimited string before writing. This kind of format-specific
+   serialization is acceptable; business-logic transformation
+   belongs in a transformer.
   
 
 # Interfaces
@@ -322,21 +342,14 @@ frequency of updates in a UI.
 
 ### SkipItemCount
 The number of items to skip before writing items.
-This property can be used to limit the number of items loaded, 
-which is useful for testing or when only a subset of data is needed.
+This property can be used to ignore the first N items, which is useful
+for resuming partway through a pipeline or when only a subset of data is needed.
 
 #### Property Value
 [`int`](https://learn.microsoft.com/en-us/dotnet/api/system.int32) The number of items to skip.
 
 #### Default Value
-0 
-
-[`int.MaxValue`](https://learn.microsoft.com/en-us/dotnet/api/system.int32.maxvalue) This means that by default there is no limit on the number of items loaded.
-
->If you are trying to loader a large number of items, you are limited to 
-the maximum value of a 32-bit integer, which is 2,147,483,647. If you need 
-to loader more than this number of items, you will need to implement your own logic 
-to handle this.
+0 -- meaning no items are skipped. All items received from the pipeline are written to the destination.
 
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
