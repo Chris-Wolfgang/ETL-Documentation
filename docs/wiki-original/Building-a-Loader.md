@@ -2,7 +2,16 @@
 
 This guide walks through building a complete loader from scratch, using `JsonLineLoader` from the `Wolfgang.Etl.Json` library as a real-world example. By the end, you will have a fully tested loader that writes JSONL data to a stream.
 
-A loader is the final step in an ETL pipeline. It receives items as an `IAsyncEnumerable<T>` and writes them to a destination -- a file, database, API, message queue, or any other target.
+A loader is the final step in an ETL pipeline. It receives items as an `IAsyncEnumerable<T>` and writes them to a destination.
+
+**"Destination" is broader than it sounds.** The obvious cases are files, databases, and HTTP APIs, but a loader can write anywhere a consumer sinks data. For example:
+
+- An `SmtpLoader` or `MimeKitLoader` that receives `MailMessage` / `MimeMessage` items from a transformer and sends each one as an email.
+- A `ServiceBusLoader` that posts each item to an Azure Service Bus topic.
+- A `ConsoleLoader` that writes each item's formatted representation to stdout for diagnostics.
+- A `WebhookLoader` that POSTs each item to an external HTTP endpoint.
+
+If your use case feels too unusual to be an ETL, it probably still fits the pipeline model. "Read records somewhere, convert them to the right shape, deliver them somewhere else" is ETL, whether the delivery is a SQL `INSERT` or an SMTP `DATA`.
 
 ## Prerequisites
 
@@ -49,6 +58,19 @@ public class JsonLineLoader<TRecord> : LoaderBase<TRecord, JsonReport>
     private readonly IProgressTimer? _progressTimer;
     private bool _progressTimerWired;
 ```
+
+
+## Why Streams, Not Files
+
+Notice that the loader's field is `Stream _stream`, not `string _filePath`. Every extractor and loader in this framework is stream-based by design. This has three concrete benefits:
+
+1. **Testable without the filesystem.** A test can build a `MemoryStream` with exactly the data it wants to feed to an extractor, or hand a loader an empty `MemoryStream` and assert on its contents afterwards. No temp directories, no cleanup, no flaky tests from leftover files.
+
+2. **Composable with whatever the caller has.** The caller chooses where the bytes come from or go to. A file? `File.OpenRead("data.jsonl")`. An in-memory buffer? `new MemoryStream(bytes)`. A web request body? `HttpResponseMessage.Content.ReadAsStream()`. A web *response* to a caller-supplied `Stream`? Same loader, the caller hands you `Response.Body`. The loader never needs to know.
+
+3. **Compression and other transformations are free.** Wrap the underlying stream in a `GZipStream`, `BrotliStream`, `DeflateStream`, or any custom stream you want -- the extractor / loader sees a plain `Stream` and reads or writes byte-by-byte as normal. See [Reading and Writing Compressed Files and Streams](Reading-and-Writing-Compressed-Files-and-Streams) for full examples.
+
+Accepting a `Stream` rather than a path costs nothing at the call site (`File.Create(path)` is one line) but everything described above is lost the moment a loader takes a `string filePath`.
 
 
 ## Step 3: Constructors
