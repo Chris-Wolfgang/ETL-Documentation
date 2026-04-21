@@ -87,11 +87,7 @@ Transforms data from the source format to the destination format by enumerating 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1)
  An asynchronous stream of items of type TDestination, representing the transformed data.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 ## ITransformWithCancellationAsync
@@ -121,11 +117,7 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 
@@ -157,11 +149,7 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
     
 ## ITransformWithProgressAndCancellationAsync\<TSource, TDestination, TProgress\>
@@ -195,11 +183,7 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-#### Applies to
- | Version |
- |---------|
- | 0.4.0 |
- | 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 # Base Classes
@@ -255,11 +239,7 @@ The current number of items that have been transformed. This property is updated
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### MaximumItemCount
@@ -279,11 +259,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### ReportingInterval
@@ -302,11 +278,7 @@ frequency of updates in a UI.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 1.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 ### SkipItemCount
@@ -330,11 +302,7 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
 
 
 
@@ -410,8 +378,4 @@ Transforms data from the source format to the destination format by enumerating 
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) Thrown when the `progress` parameter is null.
 
-#### Applies to
-| Version |
-|---------|
-| 0.4.0 |
-| 0.5.0 |
+**Introduced in:** 0.4.0
