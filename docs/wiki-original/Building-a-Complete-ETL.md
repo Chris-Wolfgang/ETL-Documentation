@@ -175,57 +175,77 @@ transformer.ReportingInterval = 5000;  // Report every 5 seconds
 ```
 
 
-## Skipping the Transformer
+## When You Do Not Need to Transform Data
 
-If you do not need to transform data -- for example, reading JSON and writing it to a different JSON format -- you can pass the extractor output directly to the loader:
+Every ETL has a transformer stage. When no transformation is needed -- for example, reading JSONL and writing it to a different JSON format -- do **not** connect the loader directly to the extractor. Skipping the transformer entirely is an antipattern:
+
+- It breaks the three-stage shape the rest of the framework is built around.
+- Adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
+- It is harder for readers of the code to see the ETL pattern.
+
+Instead, use `NoOpTransformer<T>` from `Wolfgang.Etl.Transformers` -- a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
 
 ```csharp
 using var sourceStream = File.OpenRead("data.jsonl");
 var extractor = new JsonLineExtractor<Person>(sourceStream, extractorLogger);
 
+var transformer = new NoOpTransformer<Person, TransformerProgressReport>();
+
 using var destStream = File.Create("output.json");
 var loader = new JsonSingleStreamLoader<Person>(destStream, loaderLogger);
 
-// No transformer needed
 await loader.LoadAsync
 (
-    extractor.ExtractAsync(cancellationToken),
-    cancellationToken
-);
-```
-
-This works because the extractor's `IAsyncEnumerable<Person>` satisfies the loader's `IAsyncEnumerable<Person>` parameter directly.
-
-
-## Chaining Transformers
-
-You can chain multiple transformers when the transformation is complex. Each transformer's output feeds into the next:
-
-```csharp
-var step1 = new CleanDataTransformer();    // SourcePerson -> CleanPerson
-var step2 = new EnrichTransformer();       // CleanPerson  -> EnrichedPerson
-var step3 = new MapToContactTransformer(); // EnrichedPerson -> DestinationContact
-
-await loader.LoadAsync
-(
-    step3.TransformAsync
+    transformer.TransformAsync
     (
-        step2.TransformAsync
-        (
-            step1.TransformAsync
-            (
-                extractor.ExtractAsync(cancellationToken),
-                cancellationToken
-            ),
-            cancellationToken
-        ),
+        extractor.ExtractAsync(cancellationToken),
         cancellationToken
     ),
     cancellationToken
 );
 ```
 
-Each transformer is independently testable, reusable, and composable.
+> **Note:** `NoOpTransformer<T>` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through subclass of `TransformerBase<T, T, TProgress>` whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
+
+
+## Chaining Transformers
+
+Prefer many small, focused transformers over one large transformer:
+
+1. **Smaller transformers are easier to test.** Each one has a narrow input/output contract and a single responsibility, which keeps unit tests small and focused.
+2. **Smaller transformers are more reusable.** A transformer that validates an `Address`, for example, can be reused in any ETL that produces an `Address` -- you just add conversion transformers on either side to adapt from the ERP/CRM/etc. format to `Address` and back. Composing a complex transformation from smaller pieces across projects is much easier than reusing a monolithic transformer.
+
+When several transformers need to be chained together, use `MultistepTransformer` (from `Wolfgang.Etl.Transformers`) rather than nesting `TransformAsync` calls manually. `MultistepTransformer` takes an ordered collection of transformers where:
+
+- The `TSource` of the `MultistepTransformer` matches the input of the first transformer.
+- The output of transformer N matches the input of transformer N+1.
+- The `TDestination` of the `MultistepTransformer` matches the output of the last transformer.
+
+```csharp
+var transformer = new MultistepTransformer<SourcePerson, DestinationContact, TransformerProgressReport>
+(
+    new ITransformAsync<object, object>[]
+    {
+        new CleanDataTransformer(),    // SourcePerson   -> CleanPerson
+        new EnrichTransformer(),       // CleanPerson    -> EnrichedPerson
+        new MapToContactTransformer(), // EnrichedPerson -> DestinationContact
+    }
+);
+
+await loader.LoadAsync
+(
+    transformer.TransformAsync
+    (
+        extractor.ExtractAsync(cancellationToken),
+        cancellationToken
+    ),
+    cancellationToken
+);
+```
+
+This gives you a single transformer object you can hand to the loader, while still keeping each step independently testable, reusable, and composable.
+
+> **Note:** `MultistepTransformer` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#2](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/2). Until it ships, chain transformers by nesting `TransformAsync` calls manually, with the innermost call receiving the extractor's enumerable.
 
 
 ## Interchangeability
