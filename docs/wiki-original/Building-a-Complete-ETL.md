@@ -183,13 +183,13 @@ Every ETL has a transformer stage. When no transformation is needed -- for examp
 - Adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 - It is harder for readers of the code to see the ETL pattern.
 
-Instead, use `NoOpTransformer<T>` from `Wolfgang.Etl.Transformers` -- a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
+Instead, use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers` -- a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
 
 ```csharp
 using var sourceStream = File.OpenRead("data.jsonl");
 var extractor = new JsonLineExtractor<Person>(sourceStream, extractorLogger);
 
-var transformer = new NoOpTransformer<Person, TransformerProgressReport>();
+var transformer = new PassThroughTransformer<Person, TransformerProgressReport>();
 
 using var destStream = File.Create("output.json");
 var loader = new JsonSingleStreamLoader<Person>(destStream, loaderLogger);
@@ -205,7 +205,7 @@ await loader.LoadAsync
 );
 ```
 
-> **Note:** `NoOpTransformer<T>` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through subclass of `TransformerBase<T, T, TProgress>` whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
+> **Note:** `PassThroughTransformer<T>` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through subclass of `TransformerBase<T, T, TProgress>` whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
 
 
 ## Chaining Transformers
