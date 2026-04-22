@@ -189,7 +189,7 @@ Instead, use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers` -- a p
 using var sourceStream = File.OpenRead("data.jsonl");
 var extractor = new JsonLineExtractor<Person>(sourceStream, extractorLogger);
 
-var transformer = new PassThroughTransformer<Person, TransformerProgressReport>();
+var transformer = new PassThroughTransformer<Person>();
 
 using var destStream = File.Create("output.json");
 var loader = new JsonSingleStreamLoader<Person>(destStream, loaderLogger);
