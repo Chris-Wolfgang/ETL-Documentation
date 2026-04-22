@@ -35,9 +35,9 @@ No intermediate collections. Memory usage stays constant regardless of dataset s
 | Transformer | 1-N | Converts `TSource` to `TDestination` |
 | Loader | 1 | Consumes `IAsyncEnumerable<TDestination>` and writes to the target |
 
-> Every ETL has a transformer stage. If you are moving data without converting it, use `NoOpTransformer<T>` (from `Wolfgang.Etl.Transformers`) -- a pass-through transformer that pulls each item from the extractor and yields it unchanged. Skipping the transformer entirely is an antipattern because it breaks the three-stage shape of the pipeline and makes later additions (logging, validation, enrichment) harder.
+> Every ETL has a transformer stage. If you are moving data without converting it, use `PassThroughTransformer<T>` (from `Wolfgang.Etl.Transformers`) -- a pass-through transformer that pulls each item from the extractor and yields it unchanged. Skipping the transformer entirely is an antipattern because it breaks the three-stage shape of the pipeline and makes later additions (logging, validation, enrichment) harder.
 >
-> **Note:** `NoOpTransformer<T>` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, users can write a small pass-through `TransformerBase<T, T, TProgress>` subclass.
+> **Note:** `PassThroughTransformer<T>` is a planned class tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, users can write a small pass-through `TransformerBase<T, T, TProgress>` subclass.
 
 ## Packages
 
