@@ -62,13 +62,33 @@ public class JsonLineLoader<TRecord> : LoaderBase<TRecord, JsonReport>
 
 ## Why Streams, Not Files
 
-Notice that the loader's field is `Stream _stream`, not `string _filePath`. Every extractor and loader in this framework is stream-based by design. This has three concrete benefits:
+Notice that the loader's field is `Stream _stream`, not `string _filePath`. Whenever possible favor using streams rather than file names for the following reasons:
 
 1. **Testable without the filesystem.** A test can build a `MemoryStream` with exactly the data it wants to feed to an extractor, or hand a loader an empty `MemoryStream` and assert on its contents afterwards. No temp directories, no cleanup, no flaky tests from leftover files.
 
-2. **Composable with whatever the caller has.** The caller chooses where the bytes come from or go to. A file? `File.OpenRead("data.jsonl")`. An in-memory buffer? `new MemoryStream(bytes)`. A web request body? `HttpResponseMessage.Content.ReadAsStream()`. A web *response* to a caller-supplied `Stream`? Same loader, the caller hands you `Response.Body`. The loader never needs to know.
+2. **Composable with whatever the caller has.** The caller chooses where the bytes come from or go to -- the loader never needs to know:
 
-3. **Compression and other transformations are free.** Wrap the underlying stream in a `GZipStream`, `BrotliStream`, `DeflateStream`, or any custom stream you want -- the extractor / loader sees a plain `Stream` and reads or writes byte-by-byte as normal. See [Reading and Writing Compressed Files and Streams](Reading-and-Writing-Compressed-Files-and-Streams) for full examples.
+   - A file: `File.OpenRead("data.jsonl")`
+   - An in-memory buffer: `new MemoryStream(bytes)`
+   - A web request body: `await HttpResponseMessage.Content.ReadAsStreamAsync()`
+   - A web *response* to a caller-supplied `Stream`: the caller hands you `Response.Body`
+
+3. **Working with compressed files and streams becomes very simple.** Wrap the underlying stream in a `GZipStream`, `BrotliStream`, or any other wrapper stream and hand it to the loader -- no changes to the loader itself:
+
+   ```csharp
+   using var fileStream = File.Create("output.jsonl.gz");
+   using var gzip = new GZipStream(fileStream, CompressionLevel.Optimal);
+
+   var loader = new JsonLineLoader<Contact>(gzip, logger);
+
+   await loader.LoadAsync
+   (
+       transformer.TransformAsync(extractor.ExtractAsync(ct), ct),
+       ct
+   );
+   ```
+
+   See [Reading and Writing Compressed Files and Streams](Reading-and-Writing-Compressed-Files-and-Streams) for the full set of examples including read-side decompression, Brotli, Deflate, compression-level tradeoffs, and the dispose-ordering pitfall.
 
 Accepting a `Stream` rather than a path costs nothing at the call site (`File.Create(path)` is one line) but everything described above is lost the moment a loader takes a `string filePath`.
 
