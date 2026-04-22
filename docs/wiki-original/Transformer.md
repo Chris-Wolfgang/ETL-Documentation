@@ -31,7 +31,7 @@ data from the source format, `TSource`, to the destination format, `TDestination
    [Building a Complete ETL](Building-a-Complete-ETL#chaining-transformers).
 
    > Generic transformers that are broadly reusable (validators,
-   > format converters, pass-through / no-op) live in
+   > format converters, pass-through) live in
    > `Wolfgang.Etl.Transformers`. This package is under active
    > development -- see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
 1. Each `transformer<TSource, TDestination>` should be interchangeable 
