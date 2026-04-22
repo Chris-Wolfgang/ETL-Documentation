@@ -177,7 +177,7 @@ transformer.ReportingInterval = 5000;  // Report every 5 seconds
 
 ## When You Do Not Need to Transform Data
 
-Every ETL has a transformer stage. When no transformation is needed -- for example, reading JSONL and writing it to a different JSON format -- do **not** connect the loader directly to the extractor. Skipping the transformer entirely is an antipattern:
+Every ETL has a transformer stage. When no transformation is needed -- for example, reading a fixed width file and writing it to a CSV file -- do **not** connect the loader directly to the extractor. Skipping the transformer entirely is an antipattern:
 
 - It breaks the three-stage shape the rest of the framework is built around.
 - Adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
