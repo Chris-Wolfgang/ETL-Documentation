@@ -82,7 +82,11 @@ none
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1)
  An asynchronous stream of items of type TSource, representing the extracted data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 
+| 0.5.0 |
 
 
     
@@ -107,7 +111,11 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
     
 
@@ -134,7 +142,11 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
     
 ## IExtractWithProgressAndCancellationAsync\<TSource, TProgress\>
@@ -163,7 +175,11 @@ Extracts data from the source by enumerating it asynchronously.
 #### Returns
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TSource, representing the extracted data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
 
 # Base Classes
@@ -216,7 +232,11 @@ The current number of items that have been extracted. This property is updated a
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### MaximumItemCount
@@ -236,7 +256,11 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### ReportingInterval
@@ -255,24 +279,39 @@ frequency of updates in a UI.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### SkipItemCount
 The number of items to skip before returning items.
-This property can be used to ignore the first N items, which is useful
-for resuming partway through a source or when only a subset of data is needed.
+This property can be used to limit the number of items extracted, 
+which is useful for testing or when only a subset of data is needed.
 
 #### Property Value
 [`int`](https://learn.microsoft.com/en-us/dotnet/api/system.int32) The number of items to skip.
 
 #### Default Value
-0 -- meaning no items are skipped. All items read from the source are returned.
+0
+
+[`int.MaxValue`](https://learn.microsoft.com/en-us/dotnet/api/system.int32.maxvalue) This means that by default there is no limit on the number of items extracted.
+
+>If you are trying to extract a large number of items, you are limited to 
+the maximum value of a 32-bit integer, which is 2,147,483,647. If you need 
+to extract more than this number of items, you will need to implement your own logic 
+to handle this.
 
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 
@@ -340,4 +379,8 @@ Extracts data from the source by enumerating it asynchronously periodically repo
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) Thrown when the `progress` parameter is null.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |

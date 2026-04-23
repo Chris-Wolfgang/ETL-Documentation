@@ -114,13 +114,11 @@ public class MyExtractor<TRecord> : ExtractorBase<TRecord, MyReport>
     where TRecord : notnull
 {
     private readonly IProgressTimer? _progressTimer;
-    private int _progressTimerWired;
+    private bool _progressTimerWired;
 
     // ... other fields ...
 }
 ```
-
-The guard is an `int` rather than a `bool` so it can be set atomically with `Interlocked.CompareExchange` in Step 3 -- the `CreateProgressTimer` override may be entered from more than one thread if a caller starts multiple progress-reporting operations concurrently.
 
 ### Step 2: Add the internal constructor
 
@@ -147,8 +145,9 @@ protected override IProgressTimer CreateProgressTimer(IProgress<MyReport> progre
 {
     if (_progressTimer is not null)
     {
-        if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
+        if (!_progressTimerWired)
         {
+            _progressTimerWired = true;
             _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
         }
 
@@ -159,10 +158,7 @@ protected override IProgressTimer CreateProgressTimer(IProgress<MyReport> progre
 }
 ```
 
-Two things to note about this override:
-
-- **The `Interlocked.CompareExchange` guard prevents duplicate event subscriptions** if `CreateProgressTimer` is called more than once, and does so atomically so it remains correct under concurrent entry. The subscription is wired exactly once regardless of how many threads reach the override.
-- **The fall-through `return base.CreateProgressTimer(progress)` is required.** When no test timer is injected (the production path), the base class default constructs a `SystemProgressTimer` wired to `ReportProgress`, starts it at `ReportingInterval`, and returns it. Omitting the fall-through would leave the production code path without a working timer.
+The `_progressTimerWired` flag prevents duplicate event subscriptions if `CreateProgressTimer` is called more than once.
 
 ### Step 4: Expose internals to the test project
 
