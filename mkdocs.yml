@@ -59,6 +59,12 @@ nav:
     - Progress Reporting: guides/progress-reporting.md
     - Custom Parsers & Converters: guides/custom-parsers.md
     - Performance: guides/performance.md
+    - Reading and Writing Compressed Files and Streams: guides/compressed-streams.md
+  - Reference:
+    - Extractor: reference/extractor.md
+    - Transformer: reference/transformer.md
+    - Loader: reference/loader.md
+    - TestKit: reference/testkit.md
   - Cookbook:
     - File to Database: cookbook/file-to-database.md
     - Database to File: cookbook/database-to-file.md
