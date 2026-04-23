@@ -2,16 +2,7 @@
 
 This guide walks through building a complete loader from scratch, using `JsonLineLoader` from the `Wolfgang.Etl.Json` library as a real-world example. By the end, you will have a fully tested loader that writes JSONL data to a stream.
 
-A loader is the final step in an ETL pipeline. It receives items as an `IAsyncEnumerable<T>` and writes them to a destination.
-
-**"Destination" is broader than it sounds.** The obvious cases are files, databases, and HTTP APIs, but a loader can write anywhere a consumer sinks data. For example:
-
-- An `SmtpLoader` or `MimeKitLoader` that receives `MailMessage` / `MimeMessage` items from a transformer and sends each one as an email.
-- A `ServiceBusLoader` that posts each item to an Azure Service Bus topic.
-- A `ConsoleLoader` that writes each item's formatted representation to stdout for diagnostics.
-- A `WebhookLoader` that POSTs each item to an external HTTP endpoint.
-
-If your use case feels too unusual to be an ETL, it probably still fits the pipeline model. "Read records somewhere, convert them to the right shape, deliver them somewhere else" is ETL, whether the delivery is a SQL `INSERT` or an SMTP `DATA`.
+A loader is the final step in an ETL pipeline. It receives items as an `IAsyncEnumerable<T>` and writes them to a destination -- a file, database, API, message queue, or any other target.
 
 ## Prerequisites
 
@@ -20,45 +11,6 @@ Your source project needs:
 ```xml
 <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.10.2" />
 ```
-
-
-## Interfaces vs. the Base Class
-
-There are two ways to build a loader:
-
-1. **Inherit from `LoaderBase<TDestination, TProgress>`** -- the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `LoadWorkerAsync` method. This guide focuses on this path.
-2. **Implement one of the loader interfaces directly** -- for full control. You get to decide exactly how every piece of the loader behaves, at the cost of implementing everything yourself.
-
-### The Four Loader Interfaces
-
-The loader interfaces form a diamond -- start with `ILoadAsync<TDestination>` and add only the capabilities you need:
-
-```
-            ILoadAsync<TDestination>
-                  /        \
-                 /          \
-ILoadWithCancellation    ILoadWithProgress
-     Async<T>             Async<T, TProgress>
-                 \          /
-                  \        /
-       ILoadWithProgressAndCancellation
-                Async<T, TProgress>
-```
-
-| Interface | What it adds |
-|-----------|--------------|
-| `ILoadAsync<TDestination>` | `LoadAsync(IAsyncEnumerable<TDestination>)` -- the bare minimum |
-| `ILoadWithCancellationAsync<TDestination>` | Adds a `CancellationToken` overload |
-| `ILoadWithProgressAsync<TDestination, TProgress>` | Adds an `IProgress<TProgress>` overload |
-| `ILoadWithProgressAndCancellationAsync<TDestination, TProgress>` | Adds an overload with both |
-
-The cancellation and progress interfaces both inherit from `ILoadAsync<TDestination>`. The combined interface inherits from both, which is the diamond. Implement only the interface your loader actually needs -- a loader that does not meaningfully support cancellation should not implement a cancellation interface.
-
-### When to Use the Base Class
-
-Use `LoaderBase<TDestination, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, honors `SkipItemCount` and `MaximumItemCount` consistently, and gives you the timer-injection pattern needed to test progress reporting (see [TestKit](TestKit)).
-
-Hand-implementing the interfaces is valid and supported -- for example, if you are wrapping a third-party writer with its own async loop and cannot match the base-class lifecycle -- but you are responsible for matching the contract that other loaders implement. The contract test base classes in [TestKit.Xunit](TestKit) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
 
 
 ## Step 1: Define Your Progress Report
@@ -97,39 +49,6 @@ public class JsonLineLoader<TRecord> : LoaderBase<TRecord, JsonReport>
     private readonly IProgressTimer? _progressTimer;
     private bool _progressTimerWired;
 ```
-
-
-## Why Streams, Not Files
-
-Notice that the loader's field is `Stream _stream`, not `string _filePath`. Whenever possible favor using streams rather than file names for the following reasons:
-
-1. **Testable without the filesystem.** A test can build a `MemoryStream` with exactly the data it wants to feed to an extractor, or hand a loader an empty `MemoryStream` and assert on its contents afterwards. No temp directories, no cleanup, no flaky tests from leftover files.
-
-2. **Composable with whatever the caller has.** The caller chooses where the bytes come from or go to -- the loader never needs to know:
-
-   - A file: `File.OpenRead("data.jsonl")`
-   - An in-memory buffer: `new MemoryStream(bytes)`
-   - A web request body: `await HttpResponseMessage.Content.ReadAsStreamAsync()`
-   - A web *response* to a caller-supplied `Stream`: the caller hands you `Response.Body`
-
-3. **Working with compressed files and streams becomes very simple.** Wrap the underlying stream in a `GZipStream`, `BrotliStream`, or any other wrapper stream and hand it to the loader -- no changes to the loader itself:
-
-   ```csharp
-   using var fileStream = File.Create("output.jsonl.gz");
-   using var gzip = new GZipStream(fileStream, CompressionLevel.Optimal);
-
-   var loader = new JsonLineLoader<Contact>(gzip, logger);
-
-   await loader.LoadAsync
-   (
-       transformer.TransformAsync(extractor.ExtractAsync(ct), ct),
-       ct
-   );
-   ```
-
-   See [Reading and Writing Compressed Files and Streams](Reading-and-Writing-Compressed-Files-and-Streams) for the full set of examples including read-side decompression, Brotli, Deflate, compression-level tradeoffs, and the dispose-ordering pitfall.
-
-Accepting a `Stream` rather than a path costs nothing at the call site (`File.Create(path)` is one line) but everything described above is lost the moment a loader takes a `string filePath`.
 
 
 ## Step 3: Constructors

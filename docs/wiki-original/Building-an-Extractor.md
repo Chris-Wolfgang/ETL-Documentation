@@ -12,61 +12,6 @@ Your source project needs these NuGet references:
 
 Plus whatever libraries your extractor needs to read its format (e.g., `System.Text.Json` for JSON, a CSV parser for CSV, etc.).
 
-### Pinning vs. Floating Versions
-
-The example above pins an exact version, which gives you reproducible builds -- the same build inputs today and next year produce the same output. This is the recommended default for libraries and applications that value stability over always-latest.
-
-If you want to always pull the latest minor/patch release -- useful for internal applications that regularly absorb upstream fixes -- use a floating-version reference instead:
-
-```xml
-<!-- Any version >= 0.10.2 -->
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.10.2,)" />
-
-<!-- Any version -- always latest -->
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="*" />
-```
-
-Pin when shipping a library that others will depend on. Float when you control both ends of the dependency chain and want to stay on the latest release without manual bumps. Either way, rebuild your lock file / `packages.lock.json` after a floating resolve to capture the version actually used.
-
-
-## Interfaces vs. the Base Class
-
-There are two ways to build an extractor:
-
-1. **Inherit from `ExtractorBase<TSource, TProgress>`** -- the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `ExtractWorkerAsync` method. This guide focuses on this path.
-2. **Implement one of the extractor interfaces directly** -- for full control. You get to decide exactly how every piece of the extractor behaves, at the cost of implementing everything yourself.
-
-### The Four Extractor Interfaces
-
-The extractor interfaces form a diamond -- start with `IExtractAsync<TSource>` and add only the capabilities you need:
-
-```
-           IExtractAsync<TSource>
-                  /       \
-                 /         \
-IExtractWithCancellation   IExtractWithProgress
-     Async<T>              Async<T, TProgress>
-                 \         /
-                  \       /
-     IExtractWithProgressAndCancellation
-                Async<T, TProgress>
-```
-
-| Interface | What it adds |
-|-----------|--------------|
-| `IExtractAsync<TSource>` | `ExtractAsync()` returning `IAsyncEnumerable<TSource>` -- the bare minimum |
-| `IExtractWithCancellationAsync<TSource>` | Adds a `CancellationToken` overload |
-| `IExtractWithProgressAsync<TSource, TProgress>` | Adds an `IProgress<TProgress>` overload |
-| `IExtractWithProgressAndCancellationAsync<TSource, TProgress>` | Adds an overload with both |
-
-The cancellation and progress interfaces both inherit from `IExtractAsync<TSource>`. The combined interface inherits from both, which is the diamond. Implement only the interface your extractor actually needs -- an extractor that does not meaningfully support cancellation should not implement a cancellation interface.
-
-### When to Use the Base Class
-
-Use `ExtractorBase<TSource, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, honors `SkipItemCount` and `MaximumItemCount` consistently, and gives you the timer-injection pattern needed to test progress reporting (see [TestKit](TestKit)).
-
-Hand-implementing the interfaces is valid and supported -- for example, if you are wrapping a third-party reader with its own async loop and cannot match the base-class lifecycle -- but you are responsible for matching the contract that other extractors implement. The contract test base classes in [TestKit.Xunit](TestKit) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
-
 
 ## Step 1: Define Your Progress Report
 
@@ -322,15 +267,6 @@ public record PersonRecord
 }
 ```
 
-**Why `[ExcludeFromCodeCoverage]`?** Test-support POCOs like `PersonRecord` exist only to drive tests -- they have no production logic to verify. `record` types also generate compiler-authored members (`Equals`, `GetHashCode`, `<Clone>$`, the copy constructor, deconstruction) that coverage tools will flag as uncovered branches unless the test happens to exercise every generated path. Applying `[ExcludeFromCodeCoverage]` keeps your coverage numbers honest: they reflect how well your production code is tested, not how thoroughly you exercised synthetic equality on a test-only class.
-
-Use this attribute sparingly in production code. It is appropriate on:
-- Test models and fixtures
-- Generated code that does not round-trip through your edits
-- Genuinely unreachable defensive branches that cannot be covered
-
-It is *not* a tool for hiding poorly tested production code.
-
 ### Inherit the contract test base class
 
 ```csharp
@@ -388,12 +324,6 @@ public class JsonLineExtractorTests
 ```
 
 This single class, with just three factory methods, gives you 20+ tests that validate your extractor against the full `ExtractorBase` contract.
-
-**Why this matters beyond "it saves writing tests."** Inheriting the contract test base class verifies that your extractor behaves the same as every other extractor built on `ExtractorBase`. Two extractors with the same `TSource` are interchangeable not just in signature but in *behavior* -- `CurrentItemCount` increments at the same moment, `SkipItemCount` and `MaximumItemCount` are enforced at the same boundaries, cancellation stops the pull at the same point, and so on.
-
-This is the [Liskov substitution principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle) in practice. Without the shared contract test, one implementor might increment `CurrentItemCount` before yielding each item while another increments it after -- both "work", but swapping them breaks anything downstream that reads `CurrentItemCount` from a progress callback. Consumers of the ETL pipeline should not have to know which concrete extractor they are holding. The contract tests make that promise enforceable.
-
-Deliberately deviating from the contract (for example, if you are hand-implementing the interfaces rather than inheriting from `ExtractorBase`) is supported, but you should expect the contract tests to fail for your deviation by design -- treat any such failure as a signal that consumers swapping in your implementation will see different behavior than they would from a sibling extractor.
 
 ### Add domain-specific tests
 

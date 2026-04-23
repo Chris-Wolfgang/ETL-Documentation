@@ -4,36 +4,17 @@ data from the source format, `TSource`, to the destination format, `TDestination
 
 
 ## Requirements 
-1. A transformer is usually **application-specific**, not generic.
-   The mapping from `ErpCustomer` to `CrmAccount` is inherently
-   particular to your ETL -- which fields map where, how values are
-   translated between systems, what defaults apply when a field is
-   missing. Trying to force a single generic transformer to cover
-   these variations usually produces an abstraction that fits no
-   real use case well.
-
-   The pattern for reuse is not one giant generic transformer but
-   many small focused ones that compose through shared intermediate
-   types. For example, address validation is genuinely generic:
-
-   ```
-   ErpAddress --(ErpAddressToAddress)--> Address --(AddressValidator)--> Address --(AddressToErpAddress)--> ErpAddress
-   CrmAddress --(CrmAddressToAddress)--> Address --(AddressValidator)--> Address --(AddressToCrmAddress)--> CrmAddress
-   ```
-
-   The `AddressValidator` in the middle is reusable across every
-   ETL that works with addresses. The shape-conversion transformers
-   on either side are application-specific and small enough to be
-   easy to write and test.
-
-   Use `MultistepTransformer` to compose a chain like this into a
-   single transformer you can hand to the loader -- see
-   [Building a Complete ETL](Building-a-Complete-ETL#chaining-transformers).
-
-   > Generic transformers that are broadly reusable (validators,
-   > format converters, pass-through) live in
-   > `Wolfgang.Etl.Transformers`. This package is under active
-   > development -- see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
+1. A transformer should be implemented in a generic way, allowing 
+   it to be reused for different types of ETL processes. For example,
+   a transformer could convert a customer from your ERP system to 
+   an account in your CRM system by mapping fields from one type to another
+   and converting values from one system to values for the other system. 
+   > Transformers should be written such that they can be used by other ETLs. 
+   However, usually this will be context specific and may not be 
+   reusable across different ETL processes. 
+   To help with this, it is recommended that you create many
+   smaller transformers that your can string together, where the ouput from
+   one is the input to the next. 
 1. Each `transformer<TSource, TDestination>` should be interchangeable 
    for any other `transformer<TSource, TDestination>`, where TSource and 
    TDestination are of the same type. This allows your application to 
@@ -87,7 +68,11 @@ Transforms data from the source format to the destination format by enumerating 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1)
  An asynchronous stream of items of type TDestination, representing the transformed data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
     
 ## ITransformWithCancellationAsync
@@ -117,7 +102,11 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
     
 
@@ -149,7 +138,11 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
     
 ## ITransformWithProgressAndCancellationAsync\<TSource, TDestination, TProgress\>
@@ -183,7 +176,11 @@ Transforms data from the source format to the destination format by enumerating 
 #### Returns
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) An asynchronous stream of items of type TDestination, representing the transformed data.
 
-**Introduced in:** 0.4.0
+#### Applies to
+ | Version |
+ |---------|
+ | 0.4.0 |
+ | 0.5.0 |
 
 
 # Base Classes
@@ -239,7 +236,11 @@ The current number of items that have been transformed. This property is updated
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### MaximumItemCount
@@ -259,7 +260,11 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### ReportingInterval
@@ -278,7 +283,11 @@ frequency of updates in a UI.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 ### SkipItemCount
@@ -302,7 +311,11 @@ to handle this.
 #### Exceptions
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) Thrown when the assigned value is less than 0.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
 
 
 
@@ -378,4 +391,8 @@ Transforms data from the source format to the destination format by enumerating 
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) Thrown when the `progress` parameter is null.
 
-**Introduced in:** 0.4.0
+#### Applies to
+| Version |
+|---------|
+| 0.4.0 |
+| 0.5.0 |
