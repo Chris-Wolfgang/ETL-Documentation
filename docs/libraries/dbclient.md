@@ -5,8 +5,8 @@ ADO.NET database extractor and loader using Dapper for the ETL Framework.
 | | |
 |---|---|
 | **NuGet** | `Wolfgang.Etl.DbClient` |
-| **Version** | 0.1.0 |
-| **Dependencies** | Wolfgang.Etl.Abstractions 0.10.2, Dapper 2.1.66, Microsoft.Extensions.Logging.Abstractions |
+| **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.DbClient) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Dapper, Microsoft.Extensions.Logging.Abstractions |
 | **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
 | **Source** | [ETL-DbClient](https://github.com/Chris-Wolfgang/ETL-DbClient) |
 
