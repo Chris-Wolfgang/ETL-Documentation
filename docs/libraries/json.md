@@ -5,8 +5,8 @@ JSON extractor and loader supporting JSONL, JSON arrays, and multi-stream for th
 | | |
 |---|---|
 | **NuGet** | `Wolfgang.Etl.Json` |
-| **Version** | 0.1.0 |
-| **Dependencies** | Wolfgang.Etl.Abstractions 0.10.2, System.Text.Json, Microsoft.Extensions.Logging.Abstractions |
+| **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.Json) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, System.Text.Json, Microsoft.Extensions.Logging.Abstractions |
 | **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
 | **Source** | [ETL-Json](https://github.com/Chris-Wolfgang/ETL-Json) |
 

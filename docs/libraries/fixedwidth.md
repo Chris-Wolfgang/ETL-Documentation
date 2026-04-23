@@ -5,8 +5,8 @@ Attribute-based fixed-width file extractor and loader for the ETL Framework.
 | | |
 |---|---|
 | **NuGet** | `Wolfgang.Etl.FixedWidth` |
-| **Version** | 0.1.0 |
-| **Dependencies** | Wolfgang.Etl.Abstractions 0.10.2, System.Memory, Microsoft.Extensions.Logging.Abstractions |
+| **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.FixedWidth) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, System.Memory, Microsoft.Extensions.Logging.Abstractions |
 | **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
 | **Source** | [ETL-FixedWidth](https://github.com/Chris-Wolfgang/ETL-FixedWidth) |
 

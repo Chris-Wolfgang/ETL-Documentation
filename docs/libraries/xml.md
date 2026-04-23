@@ -5,8 +5,8 @@ XML extractor and loader using XmlSerializer for the ETL Framework.
 | | |
 |---|---|
 | **NuGet** | `Wolfgang.Etl.Xml` |
-| **Version** | 0.1.0 |
-| **Dependencies** | Wolfgang.Etl.Abstractions 0.10.2, Microsoft.Extensions.Logging.Abstractions |
+| **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.Xml) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Microsoft.Extensions.Logging.Abstractions |
 | **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
 | **Source** | [ETL-Xml](https://github.com/Chris-Wolfgang/ETL-Xml) |
 
