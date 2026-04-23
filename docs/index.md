@@ -56,11 +56,16 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 | Source type | 1 | A class/record representing the raw data |
 | Destination type | 1 | A class/record representing the target data |
 | Extractor | 1 | Reads source data and yields `IAsyncEnumerable<TSource>` |
-| Transformer | 0-N | Converts `TSource` to `TDestination` (optional if types match) |
+| Transformer | 1-N | Converts `TSource` to `TDestination` |
 | Loader | 1 | Consumes `IAsyncEnumerable<TDestination>` and writes to the target |
 
-!!! tip
-    If you are moving data without transforming it, the source and destination types can be the same, and you can skip the transformer entirely.
+!!! tip "Every ETL has a transformer stage"
+    When no transformation is needed — for example, reading a fixed width file and writing it to a CSV file — use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers`. It pulls each item from the extractor and yields it unchanged, preserving the three-stage shape.
+
+    Connecting the loader directly to the extractor is an antipattern: it breaks the three-stage shape the rest of the framework is built around, and adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
+
+!!! note "PassThroughTransformer<T> is a planned class"
+    Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through `TransformerBase<T, T, TProgress>` subclass whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
 
 ## Quick Links
 
