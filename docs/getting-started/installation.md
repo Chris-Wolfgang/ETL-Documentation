@@ -24,6 +24,28 @@ dotnet add package Wolfgang.Etl.Xml
 
 Each library depends on `Wolfgang.Etl.Abstractions` — it is pulled in automatically as a transitive dependency.
 
+## Pinning vs. Floating Versions
+
+`dotnet add package` records an exact version in your `.csproj`:
+
+```xml
+<PackageReference Include="Wolfgang.Etl.Json" Version="0.1.0" />
+```
+
+Pinning an exact version gives you reproducible builds — the same build inputs today and next year produce the same output. This is the recommended default for libraries and applications that value stability over always-latest.
+
+If you want to always pull the latest minor/patch release — useful for internal applications that regularly absorb upstream fixes — replace the `Version` value with a floating reference:
+
+```xml
+<!-- Any version >= 0.10.2 -->
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.10.2,)" />
+
+<!-- Any version — always latest -->
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="*" />
+```
+
+Pin when shipping a library that others will depend on. Float when you control both ends of the dependency chain and want to stay on the latest release without manual bumps. Either way, rebuild your lock file (`packages.lock.json`) after a floating resolve to capture the version actually used.
+
 ## Installing Test Packages
 
 To write contract tests for your custom extractors and loaders, add the TestKit packages to your test project:
