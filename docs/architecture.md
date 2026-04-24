@@ -2,28 +2,8 @@
 
 The Wolfgang.Etl framework is organized into layers: **Abstractions** define the contracts, **ETL Libraries** implement them for specific formats, and **your application** wires them together.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Your Application                                               │
-│  ┌───────────┐    ┌───────────────┐    ┌───────────────────┐   │
-│  │ Extractor  │───>│  Transformer  │───>│      Loader       │   │
-│  │ (FixedWidth│    │  (your code)  │    │    (DbClient)     │   │
-│  │  JSON, Xml)│    │               │    │  FixedWidth, JSON │   │
-│  └───────────┘    └───────────────┘    └───────────────────┘   │
-├─────────────────────────────────────────────────────────────────┤
-│  ETL Libraries                                                  │
-│  Wolfgang.Etl.FixedWidth  │  Wolfgang.Etl.DbClient              │
-│  Wolfgang.Etl.Json        │  Wolfgang.Etl.Xml                   │
-├─────────────────────────────────────────────────────────────────┤
-│  Wolfgang.Etl.Abstractions                                      │
-│  ExtractorBase  │  TransformerBase  │  LoaderBase  │  Report    │
-│  IExtractAsync  │  ITransformAsync  │  ILoadAsync  │  IProgress │
-├─────────────────────────────────────────────────────────────────┤
-│  Wolfgang.Etl.TestKit / TestKit.Xunit                           │
-│  TestExtractor  │  TestTransformer  │  TestLoader               │
-│  ExtractorBaseContractTests  │  LoaderBaseContractTests          │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Wolfgang.Etl framework architecture](assets/architecture-light.svg#only-light)
+![Wolfgang.Etl framework architecture](assets/architecture-dark.svg#only-dark)
 
 ## Base Classes
 

@@ -1,0 +1,24 @@
++----------------------------------------------------------------------+
+|  Your Application                                                    |
+|                                                                      |
+|   +------------+      +---------------+      +-----------------+     |
+|   |  Extractor +----->|  Transformer  +----->|     Loader      |     |
+|   | FixedWidth |      |  (your code)  |      |    DbClient     |     |
+|   | JSON, Xml  |      |               |      |  FixedWidth     |     |
+|   +------------+      +---------------+      +-----------------+     |
++----------------------------------------------------------------------+
+|  ETL Libraries                                                       |
+|                                                                      |
+|   Wolfgang.Etl.FixedWidth     Wolfgang.Etl.DbClient                  |
+|   Wolfgang.Etl.Json           Wolfgang.Etl.Xml                       |
++----------------------------------------------------------------------+
+|  Wolfgang.Etl.Abstractions                                           |
+|                                                                      |
+|   ExtractorBase    TransformerBase    LoaderBase    Report           |
+|   IExtractAsync    ITransformAsync    ILoadAsync    IProgress        |
++----------------------------------------------------------------------+
+|  Wolfgang.Etl.TestKit / TestKit.Xunit                                |
+|                                                                      |
+|   TestExtractor    TestTransformer    TestLoader                     |
+|   ExtractorBaseContractTests    LoaderBaseContractTests              |
++----------------------------------------------------------------------+
