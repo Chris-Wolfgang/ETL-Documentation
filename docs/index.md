@@ -26,15 +26,7 @@ No intermediate collections. Memory usage stays constant regardless of dataset s
 
 ## Packages
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| `Wolfgang.Etl.Abstractions` | 0.10.2 | Base classes and interfaces for building ETL components |
-| `Wolfgang.Etl.TestKit` | 0.5.0 | Test doubles: `TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>` |
-| `Wolfgang.Etl.TestKit.Xunit` | 0.5.0 | Contract test base classes for xUnit |
-| `Wolfgang.Etl.FixedWidth` | 0.1.0 | Fixed-width file extractor and loader |
-| `Wolfgang.Etl.DbClient` | 0.1.0 | ADO.NET database extractor and loader (via Dapper) |
-| `Wolfgang.Etl.Xml` | 0.1.0 | XML extractor and loader (via XmlSerializer) |
-| `Wolfgang.Etl.Json` | 0.1.0 | JSON, JSONL, and multi-stream JSON extractor and loader |
+The framework ships as several focused NuGet packages. See [Installation](getting-started/installation.md) for the full list and install commands, or browse [Libraries](libraries/fixedwidth.md) for what each format-specific package does.
 
 ## Built-in Capabilities
 
