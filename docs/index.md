@@ -64,8 +64,9 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 ## Quick Links
 
 - **[Installation](getting-started/installation.md)** — get started with NuGet packages
-- **[Your First Extractor](getting-started/your-first-extractor.md)** — build an extractor from scratch
-- **[Your First Loader](getting-started/your-first-loader.md)** — build a loader from scratch
+- **[Your First ETL](getting-started/your-first-etl.md)** — build an end-to-end pipeline using pre-built libraries
+- **[Your First Extractor](getting-started/your-first-extractor.md)** — build a custom extractor from scratch
+- **[Your First Loader](getting-started/your-first-loader.md)** — build a custom loader from scratch
 - **[Architecture](architecture.md)** — base classes, interfaces, and design patterns
 - **[Libraries](libraries/fixedwidth.md)** — FixedWidth, DbClient, XML, JSON reference docs
 - **[Guides](guides/pipeline-composition.md)** — pipeline composition, error handling, progress, performance
