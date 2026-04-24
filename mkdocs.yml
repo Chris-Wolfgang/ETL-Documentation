@@ -22,8 +22,7 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.sections
-    - navigation.expand
+    - navigation.indexes
     - navigation.top
     - search.highlight
     - content.code.copy
@@ -45,15 +44,18 @@ nav:
   - Home: index.md
   - Architecture: architecture.md
   - Getting Started:
+    - getting-started/index.md
     - Installation: getting-started/installation.md
     - Your First Extractor: getting-started/your-first-extractor.md
     - Your First Loader: getting-started/your-first-loader.md
   - Libraries:
+    - libraries/index.md
     - FixedWidth: libraries/fixedwidth.md
     - DbClient: libraries/dbclient.md
     - XML: libraries/xml.md
     - JSON: libraries/json.md
   - Guides:
+    - guides/index.md
     - Pipeline Composition: guides/pipeline-composition.md
     - Error Handling: guides/error-handling.md
     - Progress Reporting: guides/progress-reporting.md
@@ -61,11 +63,13 @@ nav:
     - Performance: guides/performance.md
     - Reading and Writing Compressed Files and Streams: guides/compressed-streams.md
   - Reference:
+    - reference/index.md
     - Extractor: reference/extractor.md
     - Transformer: reference/transformer.md
     - Loader: reference/loader.md
     - TestKit: reference/testkit.md
   - Cookbook:
+    - cookbook/index.md
     - File to Database: cookbook/file-to-database.md
     - Database to File: cookbook/database-to-file.md
     - Transform Chains: cookbook/transform-chains.md
