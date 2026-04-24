@@ -46,6 +46,7 @@ nav:
   - Getting Started:
     - getting-started/index.md
     - Installation: getting-started/installation.md
+    - Your First ETL: getting-started/your-first-etl.md
     - Your First Extractor: getting-started/your-first-extractor.md
     - Your First Loader: getting-started/your-first-loader.md
   - Libraries:
