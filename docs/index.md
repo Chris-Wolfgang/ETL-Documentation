@@ -30,6 +30,8 @@ The framework ships as several focused NuGet packages. See [Installation](gettin
 
 ## Built-in Capabilities
 
+The `Wolfgang.Etl.Abstractions` package contains the interfaces (`IExtractAsync`, `ITransformAsync`, `ILoadAsync` and their cancellation/progress variants) that every component in the framework is built on. These interfaces are what makes the design flexible by allowing users to swap out one component for another. In addition to the interfaces, the library contains abstract base classes (`ExtractorBase`, `TransformerBase`, `LoaderBase`) that implement a lot of the boilerplate code, combined with the [TestKit](reference/testkit.md) making developing your own libraries easier.
+
 Every extractor, transformer, and loader built on the base classes gets these features for free:
 
 | Feature | Description |
