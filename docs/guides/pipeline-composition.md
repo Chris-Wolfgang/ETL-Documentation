@@ -42,6 +42,26 @@ public record DestinationContact
 }
 ```
 
+### Type flow
+
+The type parameters enforce a clear data flow through the pipeline:
+
+```
+Extractor<TSource> → Transformer<TSource, TDestination> → Loader<TDestination>
+```
+
+With chained transformers, each intermediate type must match:
+
+```
+Extractor<A>
+    → Transformer<A, B>
+    → Transformer<B, C>
+    → Transformer<C, D>
+    → Loader<D>
+```
+
+The compiler verifies that every link is type-compatible. If you wire a `Transformer<A, B>` into a `Transformer<C, D>`, the code does not compile.
+
 
 ## Building the Transformer
 
@@ -97,6 +117,39 @@ The same rules apply as extractors:
 - Implement `SkipItemCount` and `MaximumItemCount` yourself
 - Respect the `CancellationToken`
 - Use `[EnumeratorCancellation]` on the token parameter
+
+### Inline transformations without TransformerBase
+
+For simple one-off transformations, you can use an inline `async IAsyncEnumerable` method instead of creating a full transformer class:
+
+```csharp
+async IAsyncEnumerable<DestinationContact> TransformPeople
+(
+    IAsyncEnumerable<SourcePerson> people,
+    [EnumeratorCancellation] CancellationToken token
+)
+{
+    await foreach (var person in people.WithCancellation(token).ConfigureAwait(false))
+    {
+        yield return new DestinationContact
+        {
+            FullName = $"{person.first_name} {person.last_name}",
+            BirthDate = DateTime.TryParse(person.date_of_birth, out var dob)
+                ? dob
+                : null,
+        };
+    }
+}
+
+// Wire it into the pipeline:
+await loader.LoadAsync
+(
+    TransformPeople(extractor.ExtractAsync(cancellationToken), cancellationToken),
+    cancellationToken
+);
+```
+
+This approach is lightweight but does not provide progress reporting, skip/max support, or contract testability. Use `TransformerBase` for anything reusable or complex.
 
 
 ## Wiring the Pipeline
@@ -296,6 +349,117 @@ var loader = new DbLoader<DestinationContact>
 ```
 
 
+## Complete Example: JSONL to Fixed Width
+
+Reads records from a JSONL file, transforms them (department code lookup, formatting), and writes a fixed-width output file with a header and separator line:
+
+```csharp
+// Source record -- matches the JSONL structure
+public record SourceEmployee
+{
+    public string? Name { get; set; }
+    public string? Department { get; set; }
+    public decimal Salary { get; set; }
+    public DateTime HireDate { get; set; }
+}
+
+// Destination record -- fixed-width layout
+public record OutputEmployee
+{
+    [FixedWidthField(0, 30)]
+    public string? EmployeeName { get; set; }
+
+    [FixedWidthField(1, 4, Header = "Dept")]
+    public string? DeptCode { get; set; }
+
+    [FixedWidthField(2, 12, Format = "N2", Alignment = FieldAlignment.Right)]
+    public decimal AnnualSalary { get; set; }
+
+    [FixedWidthField(3, 10, Format = "yyyy-MM-dd")]
+    public DateTime StartDate { get; set; }
+}
+
+// Transformer
+public class EmployeeTransformer
+    : TransformerBase<SourceEmployee, OutputEmployee, Report>
+{
+    private static readonly Dictionary<string, string> DeptMap = new()
+    {
+        ["Engineering"] = "ENGR",
+        ["Marketing"] = "MKTG",
+        ["Sales"] = "SALE",
+    };
+
+
+
+    protected override async IAsyncEnumerable<OutputEmployee> TransformWorkerAsync
+    (
+        IAsyncEnumerable<SourceEmployee> items,
+        [EnumeratorCancellation] CancellationToken token
+    )
+    {
+        await foreach (var emp in items.WithCancellation(token).ConfigureAwait(false))
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (CurrentSkippedItemCount < SkipItemCount)
+            {
+                IncrementCurrentSkippedItemCount();
+                continue;
+            }
+
+            if (CurrentItemCount >= MaximumItemCount)
+            {
+                break;
+            }
+
+            var deptKey = emp.Department ?? string.Empty;
+            var deptCode = DeptMap.TryGetValue(deptKey, out var code) ? code : "UNKN";
+
+            var output = new OutputEmployee
+            {
+                EmployeeName = emp.Name,
+                DeptCode = deptCode,
+                AnnualSalary = emp.Salary,
+                StartDate = emp.HireDate,
+            };
+
+            IncrementCurrentItemCount();
+            yield return output;
+        }
+    }
+
+
+
+    protected override Report CreateProgressReport() =>
+        new(CurrentItemCount);
+}
+
+// Pipeline wiring
+using var sourceStream = File.OpenRead("employees.jsonl");
+var extractor = new JsonLineExtractor<SourceEmployee>(sourceStream, extractorLogger);
+
+var transformer = new EmployeeTransformer();
+
+using var destStream = File.Create("employees.dat");
+var loader = new FixedWidthLoader<OutputEmployee, FixedWidthReport>(destStream, loaderLogger);
+loader.WriteHeader = true;
+loader.FieldSeparator = '-';
+
+await loader.LoadAsync
+(
+    transformer.TransformAsync
+    (
+        extractor.ExtractAsync(cancellationToken),
+        cancellationToken
+    ),
+    cancellationToken
+);
+```
+
+This produces a fixed-width file with a header row, separator line, and formatted data.
+
+
 ## Error Handling
 
 Each component is responsible for handling errors within its domain:
@@ -386,9 +550,20 @@ Keep integration tests small — a handful of end-to-end cases that confirm the 
 
 ## See Also
 
-- [Extractor](../reference/extractor.md) — API reference
-- [Transformer](../reference/transformer.md) — API reference
-- [Loader](../reference/loader.md) — API reference
+Step-by-step guides:
+
+- [Your First Extractor](../getting-started/your-first-extractor.md) — build an extractor from scratch
+- [Your First Loader](../getting-started/your-first-loader.md) — build a loader from scratch
+
+Related topics:
+
+- [Error Handling](error-handling.md) — handling malformed data in the pipeline
+- [Progress Reporting](progress-reporting.md) — monitoring pipeline progress
+- [Performance](performance.md) — optimizing pipeline throughput
+
+API reference:
+
+- [Extractor](../reference/extractor.md)
+- [Transformer](../reference/transformer.md)
+- [Loader](../reference/loader.md)
 - [TestKit](../reference/testkit.md) — test doubles and contract tests
-- [Your First Extractor](../getting-started/your-first-extractor.md) — step-by-step extractor guide
-- [Your First Loader](../getting-started/your-first-loader.md) — step-by-step loader guide
