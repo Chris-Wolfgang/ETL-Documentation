@@ -1,6 +1,6 @@
 # Getting Started
 
-Step-by-step guides for building your first extractor, loader, and end-to-end pipeline with the Wolfgang.Etl framework.
+Step-by-step guides for building your first end-to-end pipeline plus your first custom extractor, transformer, and loader with the Wolfgang.Etl framework.
 
 Start here if you are new to the framework.
 
@@ -9,6 +9,7 @@ Start here if you are new to the framework.
 - **[Installation](installation.md)** — NuGet packages, version pinning, test-package setup
 - **[Your First ETL](your-first-etl.md)** — build an end-to-end pipeline using pre-built libraries (`DbExtractor` + `JsonSingleStreamLoader`) — see the whole shape before diving into custom components
 - **[Your First Extractor](your-first-extractor.md)** — build a custom extractor from scratch using `JsonLineExtractor` as a worked example
+- **[Your First Transformer](your-first-transformer.md)** — build a custom transformer from scratch using a `RawOrderLine → OrderLine` example with type conversion and a computed field
 - **[Your First Loader](your-first-loader.md)** — build a custom loader from scratch using `JsonLineLoader` as a worked example
 
 ## What comes after

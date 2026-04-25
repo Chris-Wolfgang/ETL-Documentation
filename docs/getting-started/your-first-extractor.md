@@ -443,3 +443,11 @@ If targeting older frameworks (netstandard2.0, net462), some APIs do not support
 - [ ] `CreateExpectedItems()` returns at least 5 items
 - [ ] Items use `record` types for value equality
 - [ ] Add domain-specific tests for format-specific behavior
+
+
+## See Also
+
+- [Your First Transformer](your-first-transformer.md) — the companion guide for transformers
+- [Your First Loader](your-first-loader.md) — the companion guide for loaders
+- [Pipeline Composition](../guides/pipeline-composition.md) — wiring extractor, transformer, and loader together
+- [Architecture](../architecture.md) — base classes and design patterns
