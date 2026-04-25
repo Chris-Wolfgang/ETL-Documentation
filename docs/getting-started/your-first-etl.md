@@ -121,52 +121,13 @@ The extractor and transformer do not care which loader is on the other end of th
 
 This variation extends the pipeline above to accept a `--format json|csv` command-line argument and pick the matching loader. Steps 1 and 2 are unchanged; only the wiring changes.
 
-### Add a tiny CSV loader
+Add the CSV package alongside the JSON one:
 
-`Wolfgang.Etl.Json` is on NuGet, but a CSV library is not yet shipped. Drop in a small inline loader that subclasses `LoaderBase<Employee, Report>` and writes one record per line — same pattern as [Your First Loader](your-first-loader.md).
-
-```csharp
-public class EmployeeCsvLoader : LoaderBase<Employee, Report>
-{
-    private readonly StreamWriter _writer;
-
-
-    public EmployeeCsvLoader(Stream destination)
-    {
-        _writer = new StreamWriter(destination);
-    }
-
-
-    protected override async Task LoadWorkerAsync
-    (
-        IAsyncEnumerable<Employee> items,
-        CancellationToken token
-    )
-    {
-        await _writer.WriteLineAsync("Id,FirstName,LastName,Email,HireDate").ConfigureAwait(false);
-
-        await foreach (var e in items.WithCancellation(token).ConfigureAwait(false))
-        {
-            await _writer
-                .WriteLineAsync($"{e.Id},{e.FirstName},{e.LastName},{e.Email},{e.HireDate:O}")
-                .ConfigureAwait(false);
-            IncrementCurrentItemCount();
-        }
-
-        await _writer.FlushAsync().ConfigureAwait(false);
-    }
-
-
-    protected override Report CreateProgressReport() => new(CurrentItemCount);
-}
+```bash
+dotnet add package Wolfgang.Etl.Csv
 ```
 
-!!! note "CsvSingleStreamLoader&lt;T&gt; is a planned class"
-    Once `Wolfgang.Etl.Csv` ships, the inline loader above can be replaced with `var loader = new CsvSingleStreamLoader<Employee>(fileStream);`. Field escaping, quoting, and culture-aware date formatting will be handled by the library — the snippet here is intentionally minimal so it fits in a tutorial.
-
-### Pick the loader at run time
-
-Type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change.
+Then type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change.
 
 ```csharp
 // args[0] is "json" or "csv"
@@ -178,7 +139,7 @@ await using var fileStream = File.Create(path);
 ILoadWithCancellationAsync<Employee> loader = format switch
 {
     "json" => new JsonSingleStreamLoader<Employee>(fileStream, loaderLogger),
-    "csv"  => new EmployeeCsvLoader(fileStream),
+    "csv"  => new CsvLoader<Employee>(fileStream, loaderLogger),
     _      => throw new ArgumentException($"Unknown format: {format}")
 };
 
@@ -193,7 +154,7 @@ await loader.LoadAsync
 );
 ```
 
-`ILoadWithCancellationAsync<Employee>` is the framework interface every cancellation-aware loader implements (see [Architecture](../architecture.md#interfaces) for the full diamond). Because the variable is typed as the interface — not as `JsonSingleStreamLoader<Employee>` or `EmployeeCsvLoader` — the same `LoadAsync` call drives whichever loader was selected.
+`ILoadWithCancellationAsync<Employee>` is the framework interface every cancellation-aware loader implements (see [Architecture](../architecture.md#interfaces) for the full diamond). Because the variable is typed as the interface — not as `JsonSingleStreamLoader<Employee>` or `CsvLoader<Employee>` — the same `LoadAsync` call drives whichever loader was selected.
 
 The same swap works in the other direction: keep the loader fixed and swap the extractor at run time when the source format depends on configuration. Any extractor of `TSource` can replace any other extractor of the same `TSource`.
 
