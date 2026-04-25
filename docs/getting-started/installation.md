@@ -2,7 +2,17 @@
 
 ## Prerequisites
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download) or later
+`Wolfgang.Etl.Abstractions` targets a broad matrix and runs on:
+
+- .NET Framework 4.6.2 or later
+- .NET Core 3.1
+- .NET 5 or later (.NET 5, 6, 7, 8, 9, 10, ...)
+- Any runtime that supports `netstandard2.0` or `netstandard2.1`
+
+You can install a [.NET SDK](https://dotnet.microsoft.com/download) for any of those.
+
+!!! note "Per-library requirements may differ"
+    The list above is for `Wolfgang.Etl.Abstractions`. Each extractor, transformer, and loader package has its own target framework matrix and runtime dependencies — check the relevant page under [Libraries](../libraries/index.md) before installing. For example, a library that depends on a third-party client may drop the oldest TFMs.
 
 ## Installing a Library
 
@@ -60,18 +70,22 @@ dotnet add package Wolfgang.Etl.TestKit.Xunit
 
 ## Package Summary
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `Wolfgang.Etl.Abstractions` | 0.10.2 | Base classes and interfaces (transitive dependency) |
-| `Wolfgang.Etl.FixedWidth` | 0.1.0 | Fixed-width file extractor and loader |
-| `Wolfgang.Etl.DbClient` | 0.1.0 | ADO.NET database extractor and loader |
-| `Wolfgang.Etl.Json` | 0.1.0 | JSON, JSONL, and multi-stream JSON |
-| `Wolfgang.Etl.Xml` | 0.1.0 | XML single-stream and multi-stream |
-| `Wolfgang.Etl.TestKit` | 0.5.0 | Test doubles for integration tests |
-| `Wolfgang.Etl.TestKit.Xunit` | 0.5.0 | Contract test base classes for xUnit |
+| Package | Purpose |
+|---------|---------|
+| `Wolfgang.Etl.Abstractions` | Base classes and interfaces (transitive dependency) |
+| `Wolfgang.Etl.FixedWidth` | Fixed-width file extractor and loader |
+| `Wolfgang.Etl.DbClient` | ADO.NET database extractor and loader |
+| `Wolfgang.Etl.Json` | JSON, JSONL, and multi-stream JSON |
+| `Wolfgang.Etl.Xml` | XML single-stream and multi-stream |
+| `Wolfgang.Etl.TestKit` | Test doubles for integration tests |
+| `Wolfgang.Etl.TestKit.Xunit` | Contract test base classes for xUnit |
+
+For the latest version of any package, see its page on [NuGet.org](https://www.nuget.org/profiles/Chris-Wolfgang) or the badges on the corresponding [Libraries](../libraries/index.md) page.
 
 ## Next Steps
 
+- [Your First ETL](your-first-etl.md) — build an end-to-end pipeline using pre-built libraries
 - [Your First Extractor](your-first-extractor.md) — build a custom extractor from scratch
+- [Your First Transformer](your-first-transformer.md) — build a custom transformer from scratch
 - [Your First Loader](your-first-loader.md) — build a custom loader from scratch
 - [Architecture](../architecture.md) — understand the base classes and design patterns
