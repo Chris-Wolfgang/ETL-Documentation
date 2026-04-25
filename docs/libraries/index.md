@@ -6,14 +6,23 @@ Each page is a short overview — what the package does, when to use it, and whe
 
 ## Libraries in this section
 
-Format-specific extractor and loader implementations:
+### Files
+
+Text-based file formats. Stream rows through any of these libraries without buffering the whole file in memory.
 
 - **[FixedWidth](fixedwidth.md)** — attribute-based fixed-width file extractor and loader. Mainframe exports, legacy banking formats, columnar ASCII output.
-- **[DbClient](dbclient.md)** — ADO.NET database extractor and loader. Any relational DB with a `DbConnection` provider (SQL Server, PostgreSQL, SQLite, MySQL, Oracle, etc.).
 - **[XML](xml.md)** — XML extractor and loader. Single-document-with-many-records or one-file-per-record streams.
 - **[JSON](json.md)** — JSON extractor and loader. JSONL / NDJSON, JSON arrays, or per-file multi-stream.
 
-Testing infrastructure:
+### Databases
+
+Relational and bulk-import paths.
+
+- **[DbClient](dbclient.md)** — ADO.NET database extractor and loader. Any relational DB with a `DbConnection` provider (SQL Server, PostgreSQL, SQLite, MySQL, Oracle, etc.).
+
+### Testing
+
+Tooling for verifying that your custom extractors, transformers, and loaders honor the framework's contract.
 
 - **[TestKit](testkit.md)** — `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit`. Test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), deterministic test helpers (`ManualProgressTimer`, `SynchronousProgress<T>`), and contract test base classes that verify your custom components honor the framework's contract.
 
