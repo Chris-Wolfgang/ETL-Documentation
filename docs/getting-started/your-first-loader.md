@@ -337,5 +337,6 @@ public class JsonLineLoaderTests
 ## See Also
 
 - [Your First Extractor](your-first-extractor.md) — the companion guide for extractors
+- [Your First Transformer](your-first-transformer.md) — the companion guide for transformers
 - [Pipeline Composition](../guides/pipeline-composition.md) — wiring extractor, transformer, and loader together
 - [Architecture](../architecture.md) — base classes and design patterns

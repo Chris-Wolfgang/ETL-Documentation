@@ -48,6 +48,7 @@ nav:
     - Installation: getting-started/installation.md
     - Your First ETL: getting-started/your-first-etl.md
     - Your First Extractor: getting-started/your-first-extractor.md
+    - Your First Transformer: getting-started/your-first-transformer.md
     - Your First Loader: getting-started/your-first-loader.md
   - Libraries:
     - libraries/index.md

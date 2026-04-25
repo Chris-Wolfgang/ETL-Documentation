@@ -120,6 +120,7 @@ The output `employees.json` is a JSON array:
 You just built an ETL using two pre-built libraries. When you need to do more:
 
 - **[Your First Extractor](your-first-extractor.md)** — build a custom extractor when no library exists for your source format
+- **[Your First Transformer](your-first-transformer.md)** — build a custom transformer for your domain-specific mapping logic
 - **[Your First Loader](your-first-loader.md)** — build a custom loader when no library exists for your destination format
 - **[Pipeline Composition](../guides/pipeline-composition.md)** — variations on the basic pattern: chaining multiple transformers, cancellation, progress reporting, error handling, the full worked example
 - **[Libraries](../libraries/index.md)** — what extractors and loaders are available out of the box (FixedWidth, DbClient, XML, JSON, and more)

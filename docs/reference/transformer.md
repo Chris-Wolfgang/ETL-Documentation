@@ -2,7 +2,7 @@
 
 API reference for the transformer interfaces and the `TransformerBase<TSource, TDestination, TProgress>` abstract base class in `Wolfgang.Etl.Abstractions`.
 
-For a step-by-step guide to building a concrete transformer, see [Pipeline Composition](../guides/pipeline-composition.md#building-the-transformer). For the underlying architecture, see [Architecture](../architecture.md).
+For a step-by-step guide to building a concrete transformer, see [Your First Transformer](../getting-started/your-first-transformer.md). For wiring it into a complete pipeline, see [Pipeline Composition](../guides/pipeline-composition.md). For the underlying architecture, see [Architecture](../architecture.md).
 
 The transformer is the second step in the ETL process, converting data from the source format, `TSource`, to the destination format, `TDestination`.
 
