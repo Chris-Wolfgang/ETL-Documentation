@@ -83,7 +83,7 @@ Each ETL component follows a consistent injection pattern:
 
 ## The notnull Constraint
 
-All `TRecord`/`TSource`/`TDestination` type parameters require `notnull`. This is enforced by Abstractions 0.10.2. Use classes or non-nullable value types — nullable reference types and `Nullable<T>` are not valid record types.
+All `TRecord`/`TSource`/`TDestination` type parameters require `notnull`. Use classes or non-nullable value types — nullable reference types and `Nullable<T>` are not valid record types.
 
 ## TestKit Architecture
 
