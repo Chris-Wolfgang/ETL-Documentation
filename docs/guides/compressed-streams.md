@@ -10,13 +10,8 @@ An extractor reads bytes from a `Stream` and deserializes them into items. A loa
 
 `GZipStream`, `BrotliStream`, and `DeflateStream` are each a `Stream` themselves — they read from or write to another stream underneath, transforming bytes as they go. Pass one of these wrappers to the extractor or loader instead of the raw file/memory stream, and compression happens transparently.
 
-```
-Caller       Wrapper stream          Underlying stream
- |                                         |
- v                                         v
- Extractor -> new GZipStream(fileStream, Decompress) -> File.OpenRead("data.jsonl.gz")
- Loader    -> new GZipStream(fileStream, Compress)   -> File.Create("out.jsonl.gz")
-```
+![Caller wraps an underlying stream with GZipStream and hands the wrapper to the extractor or loader](../assets/compressed-streams-flow-light.svg#only-light)
+![Caller wraps an underlying stream with GZipStream and hands the wrapper to the extractor or loader](../assets/compressed-streams-flow-dark.svg#only-dark)
 
 The extractor and loader were built to work with `Stream`. The wrapper *is* a `Stream`. No changes needed.
 
