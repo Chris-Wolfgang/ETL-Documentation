@@ -39,6 +39,8 @@ The base class for all extractors. Reads data from a source and yields items as 
 - Call `IncrementCurrentItemCount()` exactly once per yielded item
 - Implement `SkipItemCount` and `MaximumItemCount` logic in your worker method (the base class does not enforce them)
 
+Classes derived from `ExtractorBase` and `LoaderBase` are generally reusable across applications. Reading from (or writing to) a database, CSV, JSON, or a company's ERP / CRM / service bus is mostly the same from one ETL to the next — so making your extractor or loader as generic as reasonable for your situation is recommended.
+
 ### TransformerBase&lt;TSource, TDestination, TProgress&gt;
 
 Converts items from one type to another. Receives `IAsyncEnumerable<TSource>` and yields `IAsyncEnumerable<TDestination>`.
@@ -46,12 +48,19 @@ Converts items from one type to another. Receives `IAsyncEnumerable<TSource>` an
 - Implement `TransformWorkerAsync(IAsyncEnumerable<TSource>, CancellationToken)`
 - Same counting and skip/max rules as extractors
 
+In practice, transformers tend to fall at one of two extremes: very simple (e.g. `PassThroughTransformer<T>` or `SelectTransformer<TSource, TDestination>`) or very complex business-logic-heavy mappings — there is rarely much in the middle. Because a transformer takes `IAsyncEnumerable<TSource>` in and yields `IAsyncEnumerable<TDestination>` out, you can fully unit-test it in isolation, without connecting it to a real extractor or loader. A `TestExtractor<T>` or a hand-rolled `IAsyncEnumerable<T>` source is enough.
+
+!!! note "PassThroughTransformer<T> and SelectTransformer<TSource, TDestination> are planned classes"
+    Both will live in `Wolfgang.Etl.Transformers`. `PassThroughTransformer` is tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1); `SelectTransformer` is in [Chris-Wolfgang/ETL-Transformers#8](https://github.com/Chris-Wolfgang/ETL-Transformers/pull/8) (open PR).
+
 ### LoaderBase&lt;TDestination, TProgress&gt;
 
 Consumes `IAsyncEnumerable<TDestination>` and writes items to a destination.
 
 - Implement `LoadWorkerAsync(IAsyncEnumerable<TDestination>, CancellationToken)`
 - Same counting and skip/max rules as extractors
+
+Classes derived from `ExtractorBase` and `LoaderBase` are generally reusable across applications. Reading from (or writing to) a database, CSV, JSON, or a company's ERP / CRM / service bus is mostly the same from one ETL to the next — so making your extractor or loader as generic as reasonable for your situation is recommended.
 
 ## Report and TProgress
 
