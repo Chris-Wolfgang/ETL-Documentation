@@ -68,19 +68,9 @@ dotnet add package Wolfgang.Etl.TestKit.Xunit
 !!! note
     Use xUnit 2.9.3 with `xunit.runner.visualstudio` 2.8.2. xUnit 3.x is **not compatible** with `TestKit.Xunit`.
 
-## Package Summary
+## Available Packages
 
-| Package | Purpose |
-|---------|---------|
-| `Wolfgang.Etl.Abstractions` | Base classes and interfaces (transitive dependency) |
-| `Wolfgang.Etl.FixedWidth` | Fixed-width file extractor and loader |
-| `Wolfgang.Etl.DbClient` | ADO.NET database extractor and loader |
-| `Wolfgang.Etl.Json` | JSON, JSONL, and multi-stream JSON |
-| `Wolfgang.Etl.Xml` | XML single-stream and multi-stream |
-| `Wolfgang.Etl.TestKit` | Test doubles for integration tests |
-| `Wolfgang.Etl.TestKit.Xunit` | Contract test base classes for xUnit |
-
-For the latest version of any package, see its page on [NuGet.org](https://www.nuget.org/profiles/Chris-Wolfgang) or the badges on the corresponding [Libraries](../libraries/index.md) page.
+For the full catalog — what each package does, when to use it, and the current version — see [Libraries](../libraries/index.md).
 
 ## Next Steps
 
