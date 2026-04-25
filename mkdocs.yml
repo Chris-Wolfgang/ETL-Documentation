@@ -55,6 +55,7 @@ nav:
     - DbClient: libraries/dbclient.md
     - XML: libraries/xml.md
     - JSON: libraries/json.md
+    - TestKit: libraries/testkit.md
   - Guides:
     - guides/index.md
     - Pipeline Composition: guides/pipeline-composition.md

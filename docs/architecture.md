@@ -96,20 +96,23 @@ All `TRecord`/`TSource`/`TDestination` type parameters require `notnull`. Use cl
 
 ## TestKit Architecture
 
+`Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` provide test doubles and contract test base classes for verifying components built on `Wolfgang.Etl.Abstractions`. The summary below is for architectural orientation — see the [TestKit catalog page](libraries/testkit.md) for the package overview and the [TestKit reference](reference/testkit.md) for the full API.
+
 ### Test Doubles
 
 | Class | Purpose |
 |-------|---------|
-| `TestExtractor<T>` | Yields items from a list — use as a stand-in extractor in integration tests |
-| `TestLoader<T>` | Captures loaded items into a list — verify what was written |
-| `TestTransformer<T>` | Passes items through unchanged — verify pipeline wiring |
+| [`TestExtractor<T>`](reference/testkit.md) | Yields items from a list — use as a stand-in extractor in integration tests |
+| [`TestLoader<T>`](reference/testkit.md) | Captures loaded items into a list — verify what was written |
+| [`TestTransformer<T>`](reference/testkit.md) | Passes items through unchanged — verify pipeline wiring |
 
 ### Contract Test Base Classes
 
 | Class | Tests |
 |-------|-------|
-| `ExtractorBaseContractTests<TSut, TItem, TProgress>` | 20+ tests verifying ExtractorBase contract |
-| `LoaderBaseContractTests<TSut, TItem, TProgress>` | 20+ tests verifying LoaderBase contract |
+| [`ExtractorBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying ExtractorBase contract |
+| [`LoaderBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying LoaderBase contract |
+| [`TransformerBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying TransformerBase contract |
 
 Implement three factory methods (`CreateSut`, `CreateExpectedItems`/`CreateSourceItems`, `CreateSutWithTimer`) and the base class provides comprehensive contract verification: all four async overloads, cancellation, skip/max, progress callbacks, empty source handling, and counting correctness.
 
