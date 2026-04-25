@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="672" height="240" class="svgbob">
+  <style>.svgbob line, .svgbob path, .svgbob circle, .svgbob rect, .svgbob polygon {
+  stroke: black;
+  stroke-width: 2;
+  stroke-opacity: 1;
+  fill-opacity: 1;
+  stroke-linecap: round;
+  stroke-linejoin: miter;
+}
+
+.svgbob text {
+  white-space: pre;
+  fill: black;
+  font-family: Iosevka Fixed, monospace;
+  font-size: 14px;
+}
+
+.svgbob rect.backdrop {
+  stroke: none;
+  fill: white;
+}
+
+.svgbob .broken {
+  stroke-dasharray: 8;
+}
+
+.svgbob .filled {
+  fill: black;
+}
+
+.svgbob .bg_filled {
+  fill: white;
+  stroke-width: 1;
+}
+
+.svgbob .nofill {
+  fill: white;
+}
+
+.svgbob .end_marked_arrow {
+  marker-end: url(#arrow);
+}
+
+.svgbob .start_marked_arrow {
+  marker-start: url(#arrow);
+}
+
+.svgbob .end_marked_diamond {
+  marker-end: url(#diamond);
+}
+
+.svgbob .start_marked_diamond {
+  marker-start: url(#diamond);
+}
+
+.svgbob .end_marked_circle {
+  marker-end: url(#circle);
+}
+
+.svgbob .start_marked_circle {
+  marker-start: url(#circle);
+}
+
+.svgbob .end_marked_open_circle {
+  marker-end: url(#open_circle);
+}
+
+.svgbob .start_marked_open_circle {
+  marker-start: url(#open_circle);
+}
+
+.svgbob .end_marked_big_open_circle {
+  marker-end: url(#big_open_circle);
+}
+
+.svgbob .start_marked_big_open_circle {
+  marker-start: url(#big_open_circle);
+}
+
+</style>
+  <defs>
+    <marker id="arrow" viewBox="-2 -2 8 8" refX="4" refY="2" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <polygon points="0,0 0,4 4,2 0,0"></polygon>
+    </marker>
+    <marker id="diamond" viewBox="-2 -2 8 8" refX="4" refY="2" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <polygon points="0,2 2,0 4,2 2,4 0,2"></polygon>
+    </marker>
+    <marker id="circle" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <circle cx="4" cy="4" r="2" class="filled"></circle>
+    </marker>
+    <marker id="open_circle" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <circle cx="4" cy="4" r="2" class="bg_filled"></circle>
+    </marker>
+    <marker id="big_open_circle" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <circle cx="4" cy="4" r="3" class="bg_filled"></circle>
+    </marker>
+  </defs>
+  <rect class="backdrop" x="0" y="0" width="672" height="240"></rect>
+  <rect x="452" y="8" width="208" height="80" class="solid nofill" rx="0"></rect>
+  <text x="482" y="28" >Underlying</text>
+  <text x="570" y="28" >stream</text>
+  <text x="474" y="60" >File.OpenRead</text>
+  <path d="M 584,48 A 16,16 0,0,0 584,64" class="nofill"></path>
+  <path d="M 624,48 A 16,16 0,0,1 624,64" class="nofill"></path>
+  <text x="586" y="60" >.gz</text>
+  <rect x="452" y="136" width="208" height="80" class="solid nofill" rx="0"></rect>
+  <text x="482" y="156" >Underlying</text>
+  <text x="570" y="156" >stream</text>
+  <text x="474" y="188" >File.Create</text>
+  <path d="M 568,176 A 16,16 0,0,0 568,192" class="nofill"></path>
+  <path d="M 608,176 A 16,16 0,0,1 608,192" class="nofill"></path>
+  <text x="570" y="188" >.gz</text>
+  <text x="194" y="28" >Wrapper</text>
+  <text x="258" y="28" >stream</text>
+  <polygon points="136,36 144,40 136,44" class="filled"></polygon>
+  <polygon points="440,36 448,40 440,44" class="filled"></polygon>
+  <text x="18" y="76" >Extractor</text>
+  <text x="18" y="44" >Caller</text>
+  <text x="170" y="60" >GZipStream</text>
+  <line x1="264" y1="48" x2="256" y2="64" class="solid"></line>
+  <text x="274" y="60" >Decompress</text>
+  <text x="194" y="156" >Wrapper</text>
+  <text x="258" y="156" >stream</text>
+  <polygon points="136,164 144,168 136,172" class="filled"></polygon>
+  <polygon points="440,164 448,168 440,172" class="filled"></polygon>
+  <text x="18" y="204" >Loader</text>
+  <text x="18" y="172" >Caller</text>
+  <text x="170" y="188" >GZipStream</text>
+  <line x1="264" y1="176" x2="256" y2="192" class="solid"></line>
+  <text x="274" y="188" >Compress</text>
+  <g>
+    <line x1="4" y1="8" x2="92" y2="8" class="solid"></line>
+    <line x1="4" y1="8" x2="4" y2="88" class="solid"></line>
+    <line x1="92" y1="8" x2="92" y2="88" class="solid"></line>
+    <line x1="92" y1="40" x2="136" y2="40" class="solid"></line>
+    <line x1="4" y1="88" x2="92" y2="88" class="solid"></line>
+  </g>
+  <g>
+    <line x1="148" y1="8" x2="396" y2="8" class="solid"></line>
+    <line x1="148" y1="8" x2="148" y2="88" class="solid"></line>
+    <line x1="396" y1="8" x2="396" y2="88" class="solid"></line>
+    <line x1="396" y1="40" x2="440" y2="40" class="solid"></line>
+    <line x1="148" y1="88" x2="396" y2="88" class="solid"></line>
+  </g>
+  <g>
+    <line x1="4" y1="136" x2="92" y2="136" class="solid"></line>
+    <line x1="4" y1="136" x2="4" y2="216" class="solid"></line>
+    <line x1="92" y1="136" x2="92" y2="216" class="solid"></line>
+    <line x1="92" y1="168" x2="136" y2="168" class="solid"></line>
+    <line x1="4" y1="216" x2="92" y2="216" class="solid"></line>
+  </g>
+  <g>
+    <line x1="148" y1="136" x2="396" y2="136" class="solid"></line>
+    <line x1="148" y1="136" x2="148" y2="216" class="solid"></line>
+    <line x1="396" y1="136" x2="396" y2="216" class="solid"></line>
+    <line x1="396" y1="168" x2="440" y2="168" class="solid"></line>
+    <line x1="148" y1="216" x2="396" y2="216" class="solid"></line>
+  </g>
+</svg>

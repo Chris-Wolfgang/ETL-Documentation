@@ -5,7 +5,29 @@ The Wolfgang.Etl framework is organized into layers: **Abstractions** define the
 ![Wolfgang.Etl framework architecture](assets/architecture-light.svg#only-light)
 ![Wolfgang.Etl framework architecture](assets/architecture-dark.svg#only-dark)
 
+## Interfaces
+
+Interfaces are the contract every component is built on. Each stage has **four** interfaces arranged in a diamond inheritance pattern — not a single interface with four overloads. Implementing the base interface gives you the bare minimum; each subsequent interface layers on an additional capability:
+
+![IExtractAsync interface diamond](assets/interface-diamond-light.svg#only-light)
+![IExtractAsync interface diamond](assets/interface-diamond-dark.svg#only-dark)
+
+| Interface | Adds |
+|-----------|------|
+| `IExtractAsync<TSource>` | `ExtractAsync()` returning `IAsyncEnumerable<TSource>` — the bare minimum |
+| `IExtractWithCancellationAsync<TSource>` | `CancellationToken` overload |
+| `IExtractWithProgressAsync<TSource, TProgress>` | `IProgress<TProgress>` overload |
+| `IExtractWithProgressAndCancellationAsync<TSource, TProgress>` | Both combined |
+
+The cancellation and progress interfaces both inherit from `IExtractAsync<TSource>`. The combined interface inherits from both, forming the diamond. The same four-interface structure exists for `ILoad*Async<TDestination[, TProgress]>` and `ITransform*Async<TSource, TDestination[, TProgress]>`.
+
+Implement only the interface your component actually needs. An extractor that does not meaningfully support cancellation should not implement a cancellation interface — declare intent through what you implement, not through what you no-op.
+
+The interfaces enable mocking and substitution in tests without depending on the base class implementation. `ExtractorBase`, `TransformerBase`, and `LoaderBase` (described in the next section) each implement all four interfaces of their stage, so most consumers never need to think about the diamond — but if you need full control (e.g. wrapping a third-party reader with an incompatible lifecycle), implementing an interface directly is supported. See [Your First Extractor](getting-started/your-first-extractor.md) and [Your First Loader](getting-started/your-first-loader.md) for the full "Interfaces vs. the Base Class" discussion.
+
 ## Base Classes
+
+The interfaces above are the contract; the base classes are the easy way to implement that contract. Inheriting from `ExtractorBase`, `TransformerBase`, or `LoaderBase` gives you all four interface implementations plus orchestration (cancellation wiring, progress reporting, skip/max enforcement, the timer-injection pattern) for free, leaving you to implement just one worker method.
 
 ### ExtractorBase&lt;TSource, TProgress&gt;
 
@@ -30,35 +52,6 @@ Consumes `IAsyncEnumerable<TDestination>` and writes items to a destination.
 
 - Implement `LoadWorkerAsync(IAsyncEnumerable<TDestination>, CancellationToken)`
 - Same counting and skip/max rules as extractors
-
-## Interfaces
-
-Each stage has **four** interfaces arranged in a diamond inheritance pattern — not a single interface with four overloads. Implementing a base interface gives you the bare minimum; each subsequent interface layers on an additional capability:
-
-```
-           IExtractAsync<TSource>
-                 /       \
-                /         \
-IExtractWithCancellation   IExtractWithProgress
-     Async<T>              Async<T, TProgress>
-                \         /
-                 \       /
-    IExtractWithProgressAndCancellation
-               Async<T, TProgress>
-```
-
-| Interface | Adds |
-|-----------|------|
-| `IExtractAsync<TSource>` | `ExtractAsync()` returning `IAsyncEnumerable<TSource>` — the bare minimum |
-| `IExtractWithCancellationAsync<TSource>` | `CancellationToken` overload |
-| `IExtractWithProgressAsync<TSource, TProgress>` | `IProgress<TProgress>` overload |
-| `IExtractWithProgressAndCancellationAsync<TSource, TProgress>` | Both combined |
-
-The cancellation and progress interfaces both inherit from `IExtractAsync<TSource>`. The combined interface inherits from both, forming the diamond. The same four-interface structure exists for `ILoad*Async<TDestination[, TProgress]>` and `ITransform*Async<TSource, TDestination[, TProgress]>`.
-
-Implement only the interface your component actually needs. An extractor that does not meaningfully support cancellation should not implement a cancellation interface — declare intent through what you implement, not through what you no-op.
-
-The interfaces enable mocking and substitution in tests without depending on the base class implementation. `ExtractorBase`, `TransformerBase`, and `LoaderBase` each implement all four interfaces of their stage, so most consumers never need to think about the diamond — but if you need full control (e.g. wrapping a third-party reader with an incompatible lifecycle), implementing an interface directly is supported. See [Your First Extractor](getting-started/your-first-extractor.md) and [Your First Loader](getting-started/your-first-loader.md) for the full "Interfaces vs. the Base Class" discussion.
 
 ## Report and TProgress
 

@@ -46,19 +46,13 @@ public record DestinationContact
 
 The type parameters enforce a clear data flow through the pipeline:
 
-```
-Extractor<TSource> → Transformer<TSource, TDestination> → Loader<TDestination>
-```
+![Type flow: Extractor<TSource> to Transformer<TSource, TDestination> to Loader<TDestination>](../assets/pipeline-type-flow-light.svg#only-light)
+![Type flow: Extractor<TSource> to Transformer<TSource, TDestination> to Loader<TDestination>](../assets/pipeline-type-flow-dark.svg#only-dark)
 
 With chained transformers, each intermediate type must match:
 
-```
-Extractor<A>
-    → Transformer<A, B>
-    → Transformer<B, C>
-    → Transformer<C, D>
-    → Loader<D>
-```
+![Chained transformer type flow: Extractor<A> through Transformer<A,B>, Transformer<B,C>, Transformer<C,D> to Loader<D>](../assets/pipeline-type-flow-chained-light.svg#only-light)
+![Chained transformer type flow: Extractor<A> through Transformer<A,B>, Transformer<B,C>, Transformer<C,D> to Loader<D>](../assets/pipeline-type-flow-chained-dark.svg#only-dark)
 
 The compiler verifies that every link is type-compatible. If you wire a `Transformer<A, B>` into a `Transformer<C, D>`, the code does not compile.
 
