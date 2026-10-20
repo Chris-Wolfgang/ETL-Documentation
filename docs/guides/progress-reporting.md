@@ -212,7 +212,7 @@ Libraries like [Spectre.Console](https://spectreconsole.net/) provide richer pro
 Progress callbacks fire asynchronously, which makes them awkward to assert on directly. The TestKit package provides:
 
 - **`ManualProgressTimer`** — lets your test fire the progress timer on demand, making callback timing deterministic.
-- **Contract test base classes** (`ExtractorBaseContractTests`, `LoaderBaseContractTests`, `TransformerBaseContractTests`) — automatically verify that your component's progress callbacks fire correctly without you writing the assertions yourself.
+- **Contract test base classes** (`ExtractorBaseContractTests`, `TransformerBaseContractTests`, `LoaderBaseContractTests`) — automatically verify that your component's progress callbacks fire correctly without you writing the assertions yourself.
 
 See [TestKit](../reference/testkit.md) for the full timer-injection pattern. The component-side setup (fields, internal constructor, `CreateProgressTimer` override) is shown in [Your First Extractor](../getting-started/your-first-extractor.md#step-6-override-createprogresstimer) and [Your First Loader](../getting-started/your-first-loader.md#step-5-createprogressreport-and-createprogresstimer).
 
