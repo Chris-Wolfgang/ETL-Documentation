@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Keep the MkDocs toolchain in requirements.txt up to date.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      pip-dependencies:
+        patterns:
+          - "*"
+
+  # Keep the GitHub Actions used by the workflows up to date.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
