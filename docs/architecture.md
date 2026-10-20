@@ -19,7 +19,7 @@ Interfaces are the contract every component is built on. Each stage has **four**
 | `IExtractWithProgressAsync<TSource, TProgress>` | `IProgress<TProgress>` overload |
 | `IExtractWithProgressAndCancellationAsync<TSource, TProgress>` | Both combined |
 
-The cancellation and progress interfaces both inherit from `IExtractAsync<TSource>`. The combined interface inherits from both, forming the diamond. The same four-interface structure exists for `ILoad*Async<TDestination[, TProgress]>` and `ITransform*Async<TSource, TDestination[, TProgress]>`.
+The cancellation and progress interfaces both inherit from `IExtractAsync<TSource>`. The combined interface inherits from both, forming the diamond. The same four-interface structure exists for `ITransform*Async<TSource, TDestination[, TProgress]>` and `ILoad*Async<TDestination[, TProgress]>`.
 
 Implement only the interface your component actually needs. An extractor that does not meaningfully support cancellation should not implement a cancellation interface — declare intent through what you implement, not through what you no-op.
 
