@@ -8,13 +8,13 @@ For the timer-injection pattern applied to a specific component, see [Your First
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `Wolfgang.Etl.TestKit` | 0.5.0 | Test doubles: `TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>` |
+| `Wolfgang.Etl.TestKit` | 0.5.0 | Test doubles: `TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` |
 | `Wolfgang.Etl.TestKit.Xunit` | 0.5.0 | Contract test base classes for xUnit |
 
 
 ## Why Use TestKit?
 
-When you build a custom extractor, loader, or transformer, the base classes in `Wolfgang.Etl.Abstractions` handle orchestration (progress reporting, cancellation token wiring, async enumeration). Your derived class only implements `ExtractWorkerAsync`, `LoadWorkerAsync`, or `TransformWorkerAsync`. But you still need to verify that:
+When you build a custom extractor, transformer, or loader, the base classes in `Wolfgang.Etl.Abstractions` handle orchestration (progress reporting, cancellation token wiring, async enumeration). Your derived class only implements `ExtractWorkerAsync`, `TransformWorkerAsync`, or `LoadWorkerAsync`. But you still need to verify that:
 
 1. Your worker methods correctly call `IncrementCurrentItemCount()` for each item
 2. `SkipItemCount` and `MaximumItemCount` are respected
