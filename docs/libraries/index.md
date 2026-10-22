@@ -1,6 +1,6 @@
 # Libraries
 
-Catalog of the libraries and packages shipped with the Wolfgang.Etl framework. Most are format-specific extractor and loader implementations; the TestKit packages are testing infrastructure for verifying components built on the Abstractions.
+Catalog of the libraries and packages shipped with the Wolfgang.Etl framework: format-specific extractor and loader implementations, generic building blocks (transformers, error policies), and the TestKit packages — testing infrastructure for verifying components built on the Abstractions. This section currently has pages for the format libraries and TestKit; the [README](https://github.com/Chris-Wolfgang/ETL-Documentation#libraries-covered) lists every published package.
 
 Each page is a short overview — what the package does, when to use it, and when to pick something else — with links to its source repo for detailed API reference and recipes.
 

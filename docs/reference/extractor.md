@@ -67,8 +67,6 @@ None.
 
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TSource`, representing the extracted data.
 
-**Introduced in:** 0.4.0
-
 
 ### IExtractWithCancellationAsync
 
@@ -93,8 +91,6 @@ Extracts data from the source by enumerating it asynchronously.
 ##### Returns
 
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TSource`, representing the extracted data.
-
-**Introduced in:** 0.4.0
 
 
 ### IExtractWithProgressAsync\<TSource, TProgress\>
@@ -122,8 +118,6 @@ Extracts data from the source by enumerating it asynchronously.
 ##### Returns
 
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TSource`, representing the extracted data.
-
-**Introduced in:** 0.4.0
 
 
 ### IExtractWithProgressAndCancellationAsync\<TSource, TProgress\>
@@ -153,8 +147,6 @@ Extracts data from the source by enumerating it asynchronously.
 ##### Returns
 
 [`IAsyncEnumerable<TSource>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TSource`, representing the extracted data.
-
-**Introduced in:** 0.4.0
 
 
 ## ExtractorBase\<TSource, TProgress\>
@@ -207,8 +199,6 @@ Read-only. The current number of items that have been extracted. This property i
 
 `0`.
 
-**Introduced in:** 0.4.0
-
 
 #### MaximumItemCount
 
@@ -228,8 +218,6 @@ The maximum number of items to be extracted before exiting and reporting complet
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### ReportingInterval
 
@@ -247,8 +235,6 @@ The number of milliseconds between progress reports. This property can be used t
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### SkipItemCount
 
@@ -265,8 +251,6 @@ The number of items to skip before returning items. This property can be used to
 ##### Exceptions
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 0.
-
-**Introduced in:** 0.4.0
 
 
 ### Methods
@@ -348,8 +332,6 @@ Extracts data from the source asynchronously with both progress reporting and ca
 ##### Exceptions
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) — thrown when the `progress` parameter is null.
-
-**Introduced in:** 0.4.0
 
 
 ## ExtractorBase\<TSource\>

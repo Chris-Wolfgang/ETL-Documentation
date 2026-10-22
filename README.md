@@ -4,7 +4,7 @@
 
 Comprehensive guides, architecture reference, and cookbook for the [Wolfgang.Etl](https://github.com/Chris-Wolfgang) framework.
 
-**Live site:** [https://Chris-Wolfgang.github.io/ETL-Documentation/](https://Chris-Wolfgang.github.io/ETL-Documentation/)
+**Live site:** [https://chris-wolfgang.github.io/ETL-Documentation/](https://chris-wolfgang.github.io/ETL-Documentation/)
 
 ## Libraries Covered
 

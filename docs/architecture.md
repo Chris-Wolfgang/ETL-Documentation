@@ -39,8 +39,6 @@ The base class for all extractors. Reads data from a source and yields items as 
 - Call `IncrementCurrentItemCount()` exactly once per yielded item
 - Implement `SkipItemCount` and `MaximumItemCount` logic in your worker method (the base class does not enforce them)
 
-Classes derived from `ExtractorBase` and `LoaderBase` are generally reusable across applications. Reading from (or writing to) a database, CSV, JSON, or a company's ERP / CRM / service bus is mostly the same from one ETL to the next — so making your extractor or loader as generic as reasonable for your situation is recommended.
-
 ### TransformerBase&lt;TSource, TDestination, TProgress&gt;
 
 Converts items from one type to another. Receives `IAsyncEnumerable<TSource>` and yields `IAsyncEnumerable<TDestination>`.

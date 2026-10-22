@@ -68,8 +68,6 @@ Transforms data from the source format to the destination format by enumerating 
 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TDestination`, representing the transformed data.
 
-**Introduced in:** 0.4.0
-
 
 ### ITransformWithCancellationAsync
 
@@ -98,8 +96,6 @@ Transforms data from the source format to the destination format by enumerating 
 ##### Returns
 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TDestination`, representing the transformed data.
-
-**Introduced in:** 0.4.0
 
 
 ### ITransformWithProgressAsync\<TSource, TDestination, TProgress\>
@@ -131,8 +127,6 @@ Transforms data from the source format to the destination format by enumerating 
 ##### Returns
 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TDestination`, representing the transformed data.
-
-**Introduced in:** 0.4.0
 
 
 ### ITransformWithProgressAndCancellationAsync\<TSource, TDestination, TProgress\>
@@ -166,8 +160,6 @@ Transforms data from the source format to the destination format by enumerating 
 ##### Returns
 
 [`IAsyncEnumerable<TDestination>`](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.iasyncenumerable-1) — an asynchronous stream of items of type `TDestination`, representing the transformed data.
-
-**Introduced in:** 0.4.0
 
 
 ## TransformerBase\<TSource, TDestination, TProgress\>
@@ -222,8 +214,6 @@ Read-only. The current number of items that have been transformed. This property
 
 `0`.
 
-**Introduced in:** 0.4.0
-
 
 #### MaximumItemCount
 
@@ -243,8 +233,6 @@ The maximum number of items to be transformed before exiting and reporting compl
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### ReportingInterval
 
@@ -262,8 +250,6 @@ The number of milliseconds between progress reports. This property can be used t
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### SkipItemCount
 
@@ -280,8 +266,6 @@ The number of items to skip before returning items. This property can be used to
 ##### Exceptions
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 0.
-
-**Introduced in:** 0.4.0
 
 
 ### Methods
@@ -369,8 +353,6 @@ Transforms data asynchronously with both progress reporting and cancellation.
 ##### Exceptions
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) — thrown when the `progress` parameter is null.
-
-**Introduced in:** 0.4.0
 
 
 ## TransformerBase\<TSource, TDestination\>
