@@ -20,7 +20,7 @@ The transformer is the second step in the ETL process, converting data from the 
 
     The `AddressValidator` in the middle is reusable across every ETL that works with addresses. The shape-conversion transformers on either side are application-specific and small enough to be easy to write and test.
 
-    Use `Then(...)` / `ChainTransformer<TSource, TIntermediate, TDestination>` from `Wolfgang.Etl.Transformers` to compose a chain like this into a single transformer you can hand to the loader — see [Pipeline Composition § Chaining Transformers](../guides/pipeline-composition.md#chaining-transformers).
+    Use `Then(...)` / [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) from `Wolfgang.Etl.Transformers` to compose a chain like this into a single transformer you can hand to the loader — see [Pipeline Composition § Chaining Transformers](../guides/pipeline-composition.md#chaining-transformers).
 
     !!! note "Wolfgang.Etl.Transformers"
         Generic transformers that are broadly reusable (validators, format converters, pass-through) live in the published `Wolfgang.Etl.Transformers` package: pass-through, select / where / distinct / chunk / take / skip, buffering, throttling and chaining — see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
