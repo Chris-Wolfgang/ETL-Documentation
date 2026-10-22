@@ -5,7 +5,7 @@ Batch import: read a JSON Lines file, map each line to the shape of a database t
 | Stage | Component | Package |
 |-------|-----------|---------|
 | Extract | `JsonLineExtractor<OrderLine>` | `Wolfgang.Etl.Json` |
-| Transform | `SelectTransformer<OrderLine, OrderRow>` | `Wolfgang.Etl.Transformers` |
+| Transform | [`SelectTransformer<OrderLine, OrderRow>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.SelectTransformer-2.html) | `Wolfgang.Etl.Transformers` |
 | Load | `SqlBulkCopyLoader<OrderRow>` | `Wolfgang.Etl.SqlBulkCopy` |
 
 ```bash
