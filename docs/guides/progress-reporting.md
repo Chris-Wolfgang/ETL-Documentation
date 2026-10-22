@@ -58,10 +58,14 @@ Progress callbacks fire on a background thread at the configured `ReportingInter
 
 ## ReportingInterval
 
-`ReportingInterval` controls how frequently progress callbacks fire. It is an `int` property on every extractor, transformer, and loader:
+`ReportingInterval` controls how frequently progress callbacks fire. It is an `int` property (milliseconds) on every extractor, transformer, and loader, configured through the stage's options record when it is constructed:
 
 ```csharp
-extractor.ReportingInterval = 500; // Milliseconds
+var extractor = new JsonLineExtractor<MyRecord>
+(
+    stream,
+    new JsonLineExtractorOptions { ReportingInterval = 500 } // Milliseconds
+);
 ```
 
 The default is 1000 (one second). Lower values give smoother UI updates at the cost of more callback overhead. Higher values reduce overhead for batch workloads where an occasional progress log is enough.
@@ -239,7 +243,11 @@ var progress = new Progress<FixedWidthReport>(report =>
     );
 });
 
-extractor.ReportingInterval = 200; // Update 5 times per second
+var extractor = new FixedWidthExtractor<MyRecord>
+(
+    stream,
+    new FixedWidthExtractorStreamOptions<MyRecord> { ReportingInterval = 200 } // Update 5 times per second
+);
 
 await foreach (var record in extractor.ExtractAsync(progress, cancellationToken))
 {
@@ -257,10 +265,11 @@ Libraries like [Spectre.Console](https://spectreconsole.net/) provide richer pro
 
 Progress callbacks fire asynchronously, which makes them awkward to assert on directly. The TestKit package provides:
 
-- **`ManualProgressTimer`** — lets your test fire the progress timer on demand, making callback timing deterministic.
+- **`ManualProgressTimerCore`** (attached with `WithManualProgressTimer`) — lets your test fire the progress callback on demand with `Tick()`, making callback timing deterministic. It works through the base class, so the component needs no timer-injection code.
+- **`ManualTimeSource`** (attached with `WithTimeSource`) — freezes the clock behind `Report.Elapsed`, `ItemsPerSecond` and `EstimatedRemaining`.
 - **Contract test base classes** (`ExtractorBaseContractTests`, `TransformerBaseContractTests`, `LoaderBaseContractTests`) — automatically verify that your component's progress callbacks fire correctly without you writing the assertions yourself.
 
-See [TestKit](../reference/testkit.md) for the full timer-injection pattern. The component-side setup (fields, internal constructor, `CreateProgressTimer` override) is shown in [Your First Extractor](../getting-started/your-first-extractor.md#step-6-override-createprogresstimer) and [Your First Loader](../getting-started/your-first-loader.md#step-5-createprogressreport-and-createprogresstimer).
+See [TestKit § Progress Timing in Tests](../reference/testkit.md#progress-timing-in-tests) for an example.
 
 
 ## See Also

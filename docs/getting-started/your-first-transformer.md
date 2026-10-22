@@ -18,7 +18,7 @@ Your source project needs:
 
 There are two ways to build a transformer:
 
-1. **Inherit from `TransformerBase<TSource, TDestination, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `TransformWorkerAsync` method. This guide focuses on this path.
+1. **Inherit from `TransformerBase<TSource, TDestination, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, configuration validation, progress timer setup) and leaves you to implement a single `TransformWorkerAsync` method. This guide focuses on this path.
 2. **Implement one of the transformer interfaces directly** — for full control. You decide exactly how every piece of the transformer behaves, at the cost of implementing everything yourself.
 
 See [Architecture § Interfaces](../architecture.md#interfaces) for the four-interface diamond shared across all three stages.
@@ -89,35 +89,28 @@ public class OrderLineTransformer
     : TransformerBase<RawOrderLine, OrderLine, OrderLineReport>
 {
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
-    private int _progressTimerWired;
 ```
 
 | Field | Purpose |
 |-------|---------|
 | `_logger` | Structured logging via `Microsoft.Extensions.Logging` |
-| `_progressTimer` | Nullable timer for test injection (see [TestKit](../reference/testkit.md)) |
-| `_progressTimerWired` | Guard flag (`int`, set atomically via `Interlocked.CompareExchange`) preventing duplicate timer event subscriptions |
+
+The stage-level configuration (`SkipItemCount`, `MaximumItemCount`, `ReportingInterval`, error policy) arrives in a `TransformerOptions` record passed to the base constructor.
 
 
 ## Step 4: Constructors
 
-You need at least one public constructor plus one internal constructor for testing:
+One public constructor is enough; it passes the `TransformerOptions` to the base class, which validates them and throws `ArgumentOutOfRangeException` for out-of-range values (`null` means "use the defaults"):
 
 ```csharp
-    // Public: for production use
-    public OrderLineTransformer(ILogger<OrderLineTransformer> logger)
+    public OrderLineTransformer
+    (
+        ILogger<OrderLineTransformer>? logger = null,
+        TransformerOptions? options = null
+    )
+        : base(options)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-
-
-    // Internal: for timer injection in tests
-    internal OrderLineTransformer(ILogger logger, IProgressTimer timer)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
+        _logger = (ILogger?)logger ?? NullLogger.Instance;
     }
 ```
 
@@ -135,13 +128,16 @@ This is the core of your transformer. It is an `async` iterator method that cons
         [EnumeratorCancellation] CancellationToken token
     )
     {
+        var skipBudget = SkipItemCount;
+
         await foreach (var raw in items.WithCancellation(token).ConfigureAwait(false))
         {
             token.ThrowIfCancellationRequested();
 
-            // Handle SkipItemCount
-            if (CurrentSkippedItemCount < SkipItemCount)
+            // Handle SkipItemCount (a local budget, so invalid lines skipped below do not use it up)
+            if (skipBudget > 0)
             {
+                skipBudget--;
                 IncrementCurrentSkippedItemCount();
                 continue;
             }
@@ -181,14 +177,14 @@ This is the core of your transformer. It is an `async` iterator method that cons
 ### Critical Rules
 
 1. **Call `IncrementCurrentItemCount()` exactly once per yielded item.** Not in helper methods, not conditionally — once, right before or after the `yield return`.
-2. **Implement `SkipItemCount` and `MaximumItemCount` yourself.** The base class does not enforce them.
+2. **Implement `SkipItemCount` and `MaximumItemCount` yourself.** The base class validates them but does not enforce them.
 3. **Respect the `CancellationToken`.** Call `token.ThrowIfCancellationRequested()` in your loop.
 4. **Use `[EnumeratorCancellation]` on the token parameter.** Required for `async IAsyncEnumerable` methods so that `WithCancellation()` works correctly.
 5. **Use `.ConfigureAwait(false)`** on all `await` calls in library code.
 6. **Decide your error policy.** A transformer can throw on a bad record (the exception propagates), skip the record (as shown above), or substitute a default. See [Error Handling](../guides/error-handling.md) for the trade-offs.
 
 
-## Step 6: CreateProgressReport and CreateProgressTimer
+## Step 6: CreateProgressReport
 
 Identical pattern to extractors and loaders:
 
@@ -199,77 +195,23 @@ Identical pattern to extractors and loaders:
             CurrentItemCount,
             CurrentSkippedItemCount
         );
-
-
-
-    protected override IProgressTimer CreateProgressTimer(IProgress<OrderLineReport> progress)
-    {
-        if (_progressTimer is not null)
-        {
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
-```
-
-The `Interlocked.CompareExchange` guard prevents duplicate event subscriptions atomically. The fall-through `return base.CreateProgressTimer(progress)` is required so the production path gets a working `SystemProgressTimer`. See [TestKit](../reference/testkit.md) for the full timer-injection pattern and rationale.
-
-
-## Step 7: Expose Internals to the Test Project
-
-Create `Properties/AssemblyInfo.cs` in your source project:
-
-```csharp
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("YourProject.Tests.Unit")]
-```
-
-
-## Step 8: Write Tests
-
-Inherit the contract test base class from `Wolfgang.Etl.TestKit.Xunit`:
-
-```csharp
-public class OrderLineTransformerTests
-    : TransformerBaseContractTests<OrderLineTransformer, RawOrderLine, OrderLineReport>
-{
-    private static readonly IReadOnlyList<RawOrderLine> ExpectedItems = new List<RawOrderLine>
-    {
-        new() { OrderId = "1", ProductCode = "A", Quantity = "2", UnitPrice = "10.00", Currency = "USD" },
-        new() { OrderId = "2", ProductCode = "B", Quantity = "1", UnitPrice = "5.50",  Currency = "USD" },
-        new() { OrderId = "3", ProductCode = "C", Quantity = "5", UnitPrice = "1.25",  Currency = "USD" },
-        new() { OrderId = "4", ProductCode = "D", Quantity = "3", UnitPrice = "2.00",  Currency = "USD" },
-        new() { OrderId = "5", ProductCode = "E", Quantity = "7", UnitPrice = "0.75",  Currency = "USD" },
-    };
-
-
-
-    protected override OrderLineTransformer CreateSut(int itemCount) =>
-        new(NullLogger<OrderLineTransformer>.Instance);
-
-
-
-    protected override IReadOnlyList<RawOrderLine> CreateExpectedItems() => ExpectedItems;
-
-
-
-    protected override OrderLineTransformer CreateSutWithTimer(IProgressTimer timer) =>
-        new(NullLogger<OrderLineTransformer>.Instance, timer);
 }
 ```
 
-That's the entire test class. The contract base provides 20+ tests covering all four `TransformAsync` overloads, cancellation, skip/max enforcement, progress callbacks, empty-source handling, and counting correctness.
+No timer plumbing is needed: the base class runs the production timer, and TestKit drives progress in tests through the base class (see [TestKit § Progress Timing in Tests](../reference/testkit.md#progress-timing-in-tests)). Earlier versions of this guide added an `IProgressTimer` field, an internal constructor, a `CreateProgressTimer` override and `InternalsVisibleTo`; leave them out of new transformers.
+
+
+## Step 7: Write Tests
+
+### The contract tests apply to same-type transformers
+
+`TransformerBaseContractTests<TSut, TItem, TProgress>` from `Wolfgang.Etl.TestKit.Xunit` requires `TSut : TransformerBase<TItem, TItem, TProgress>` — it feeds items in and expects the same type out, so it fits validators, filters, enrichers and other `T` → `T` transformers. Its 48 tests then come from two factory methods, `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` and `CreateExpectedItems()`, exactly as in [Your First Extractor](your-first-extractor.md#inherit-the-contract-test-base-class).
+
+`OrderLineTransformer` changes the type (`RawOrderLine` → `OrderLine`), so test it directly. The contract behaviors worth covering yourself are the ones your worker implements: `SkipItemCount`, `MaximumItemCount`, cancellation, and one `IncrementCurrentItemCount()` per yielded item.
 
 ### Add domain-specific tests
 
-On top of the contract tests, verify behavior unique to your transformer:
+Verify the conversion rules and the configuration your worker honors:
 
 ```csharp
 [Fact]
@@ -293,6 +235,29 @@ public async Task TransformAsync_when_quantity_invalid_skips_record()
     Assert.Equal("2", results[0].OrderId);
     Assert.Equal(15.00m, results[0].Total);
 }
+
+
+
+[Fact]
+public async Task TransformAsync_when_SkipItemCount_is_1_skips_the_first_record()
+{
+    var raw = new[]
+    {
+        new RawOrderLine { OrderId = "1", Quantity = "1", UnitPrice = "1.00" },
+        new RawOrderLine { OrderId = "2", Quantity = "2", UnitPrice = "1.00" },
+    };
+
+    var sut = new OrderLineTransformer(options: new TransformerOptions { SkipItemCount = 1 });
+
+    var results = new List<OrderLine>();
+    await foreach (var line in sut.TransformAsync(raw.ToAsyncEnumerable()))
+    {
+        results.Add(line);
+    }
+
+    Assert.Equal("2", Assert.Single(results).OrderId);
+    Assert.Equal(1, sut.CurrentSkippedItemCount);
+}
 ```
 
 `raw.ToAsyncEnumerable()` turns the array into an `IAsyncEnumerable<RawOrderLine>`. It is not part of the framework packages: on .NET 10 and later it is built in (`System.Linq.AsyncEnumerable`); on older test targets add the `System.Linq.Async` package to the test project.
@@ -314,9 +279,12 @@ await loader.LoadAsync
     cancellationToken
 );
 
-// With skip and maximum
-transformer.SkipItemCount = 100;
-transformer.MaximumItemCount = 1000;
+// With skip and maximum: configure them when the transformer is constructed
+var paged = new OrderLineTransformer
+(
+    transformerLogger,
+    new TransformerOptions { SkipItemCount = 100, MaximumItemCount = 1000 }
+);
 
 // With progress reporting
 var progress = new Progress<OrderLineReport>(r =>
@@ -325,7 +293,7 @@ var progress = new Progress<OrderLineReport>(r =>
 
 await loader.LoadAsync
 (
-    transformer.TransformAsync
+    paged.TransformAsync
     (
         extractor.ExtractAsync(cancellationToken),
         progress,
@@ -338,18 +306,16 @@ await loader.LoadAsync
 
 ## Checklist
 
-- [ ] Inherit `TransformerBase<TSource, TDestination, TProgress>` with `where TSource : notnull` and `where TDestination : notnull`
+- [ ] Inherit `TransformerBase<TSource, TDestination, TProgress>` (or `TransformerBase<TSource, TDestination>`) with `where TSource : notnull` and `where TDestination : notnull`
+- [ ] Accept a `TransformerOptions?` (or a record derived from it) and pass it to `base(options)`
 - [ ] Implement `TransformWorkerAsync` with `[EnumeratorCancellation]` on the token
 - [ ] Implement `CreateProgressReport()`
 - [ ] Call `IncrementCurrentItemCount()` exactly once per yielded item
 - [ ] Implement `SkipItemCount` logic in your worker method
 - [ ] Implement `MaximumItemCount` logic in your worker method
 - [ ] Respect `CancellationToken` (pass to async calls, call `ThrowIfCancellationRequested`)
-- [ ] Add `_progressTimer` field, `_progressTimerWired` flag (`int`), and internal constructor
-- [ ] Override `CreateProgressTimer` with `Interlocked.CompareExchange` guard and `base` fall-through
-- [ ] Add `InternalsVisibleTo` in `Properties/AssemblyInfo.cs`
-- [ ] Test class inherits `TransformerBaseContractTests<TSut, TItem, TProgress>`
-- [ ] `CreateExpectedItems()` returns at least 5 items
+- [ ] Same-type (`T` → `T`) transformer: test class inherits `TransformerBaseContractTests<TSut, TItem, TProgress>`, implements the four-argument `CreateSut`, and `CreateExpectedItems()` returns at least 5 items
+- [ ] Type-changing transformer: direct tests for conversion rules, `SkipItemCount`, `MaximumItemCount` and cancellation
 - [ ] `TSource` and `TDestination` use `record` types for value equality
 - [ ] Add domain-specific tests for transformer-specific behavior (validation rules, computed fields, error policies)
 
