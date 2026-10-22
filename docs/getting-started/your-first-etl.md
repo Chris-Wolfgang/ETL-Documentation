@@ -80,7 +80,7 @@ await using var connection = new SqlConnection(connectionString);
 await connection.OpenAsync(cts.Token);
 
 // Extractor: SQL Server -> Employee
-var extractor = new DbExtractor<Employee, DbReport>
+var extractor = new DbExtractor<Employee>
 (
     connection,
     "SELECT id, first_name, last_name, email, hire_date FROM employees",
@@ -127,7 +127,7 @@ Add the CSV package alongside the JSON one:
 dotnet add package Wolfgang.Etl.Csv
 ```
 
-Then type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change.
+Then type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change. (`CsvLoader<T>` writes through a `StreamWriter`, while the JSON loaders take the `Stream` itself; each loader also takes its own typed `ILogger<...>`.)
 
 ```csharp
 // args[0] is "json" or "csv"
@@ -135,11 +135,12 @@ var format = args.Length > 0 ? args[0] : "json";
 var path = $"employees.{format}";
 
 await using var fileStream = File.Create(path);
+await using var fileWriter = new StreamWriter(fileStream);
 
 ILoadWithCancellationAsync<Employee> loader = format switch
 {
-    "json" => new JsonSingleStreamLoader<Employee>(fileStream, loaderLogger),
-    "csv"  => new CsvLoader<Employee>(fileStream, loaderLogger),
+    "json" => new JsonSingleStreamLoader<Employee>(fileStream, jsonLoaderLogger),
+    "csv"  => new CsvLoader<Employee>(fileWriter, csvLoaderLogger),
     _      => throw new ArgumentException($"Unknown format: {format}")
 };
 

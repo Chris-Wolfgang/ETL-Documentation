@@ -295,6 +295,8 @@ public async Task TransformAsync_when_quantity_invalid_skips_record()
 }
 ```
 
+`raw.ToAsyncEnumerable()` turns the array into an `IAsyncEnumerable<RawOrderLine>`. It is not part of the framework packages: on .NET 10 and later it is built in (`System.Linq.AsyncEnumerable`); on older test targets add the `System.Linq.Async` package to the test project.
+
 
 ## Using Your Transformer
 
