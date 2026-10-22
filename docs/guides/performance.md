@@ -39,14 +39,17 @@ var extractor = new FixedWidthExtractor<MyRecord>(reader, logger);
 
 ### Use SkipItemCount and MaximumItemCount instead of LINQ
 
-The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside `ExtractWorkerAsync` / `LoadWorkerAsync`, where they can short-circuit the read loop and avoid reading or processing items that will be discarded.
+The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside `ExtractWorkerAsync` / `LoadWorkerAsync`, where they can short-circuit the read loop and avoid reading or processing items that will be discarded. Set them through the stage's options record when you construct it.
 
 LINQ's `Skip()` and `Take()` operators, by contrast, still enumerate through the skipped items — they just discard them after extraction:
 
 ```csharp
 // Good: skips at the source level — lines are read but not parsed
-extractor.SkipItemCount = 1000;
-extractor.MaximumItemCount = 500;
+var extractor = new JsonLineExtractor<MyRecord>
+(
+    stream,
+    new JsonLineExtractorOptions { SkipItemCount = 1000, MaximumItemCount = 500 }
+);
 
 // Bad: parses all 1000 skipped records before discarding them
 var items = extractor.ExtractAsync(cancellationToken)
@@ -116,9 +119,14 @@ await loader.LoadAsync
     cancellationToken
 );
 
-// Interactive: report every 500 ms
-extractor.ReportingInterval = 500;
-await foreach (var record in extractor.ExtractAsync(progress, cancellationToken))
+// Interactive: report every 500 ms (set at construction)
+var interactive = new JsonLineExtractor<MyRecord>
+(
+    stream,
+    new JsonLineExtractorOptions { ReportingInterval = 500 }
+);
+
+await foreach (var record in interactive.ExtractAsync(progress, cancellationToken))
 {
     Process(record);
 }
