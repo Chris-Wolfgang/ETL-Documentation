@@ -1,0 +1,4 @@
+# Direct build dependency of the documentation site. Pinned exactly; requirements.txt is the
+# hash-locked closure generated from this file:
+#   pip-compile --generate-hashes --strip-extras --output-file=requirements.txt requirements.in
+mkdocs-material==9.7.7
