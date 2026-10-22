@@ -4,10 +4,9 @@
 
 `Wolfgang.Etl.Abstractions` targets a broad matrix and runs on:
 
-- .NET Framework 4.6.2 or later
-- .NET Core 3.1
-- .NET 5 or later (.NET 5, 6, 7, 8, 9, 10, ...)
-- Any runtime that supports `netstandard2.0` or `netstandard2.1`
+- .NET Framework 4.6.2 or later (`net462`, `net472`, `net48` and `net481` assets)
+- .NET 5 or later (`net5.0` through `net10.0` assets)
+- Any other runtime that supports `netstandard2.0` (for example .NET Core 3.1, which uses the `netstandard2.0` asset and is no longer tested)
 
 You can install a [.NET SDK](https://dotnet.microsoft.com/download) for any of those.
 
@@ -39,7 +38,7 @@ Each library depends on `Wolfgang.Etl.Abstractions` — it is pulled in automati
 `dotnet add package` records an exact version in your `.csproj`:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Json" Version="0.1.0" />
+<PackageReference Include="Wolfgang.Etl.Json" Version="0.10.0" />
 ```
 
 Pinning an exact version gives you reproducible builds — the same build inputs today and next year produce the same output. This is the recommended default for libraries and applications that value stability over always-latest.
@@ -47,8 +46,8 @@ Pinning an exact version gives you reproducible builds — the same build inputs
 If you want to always pull the latest minor/patch release — useful for internal applications that regularly absorb upstream fixes — replace the `Version` value with a floating reference:
 
 ```xml
-<!-- Any version >= 0.10.2 -->
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.10.2,)" />
+<!-- Any version >= 0.26.1 -->
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.26.1,)" />
 
 <!-- Any version — always latest -->
 <PackageReference Include="Wolfgang.Etl.Abstractions" Version="*" />
@@ -66,7 +65,7 @@ dotnet add package Wolfgang.Etl.TestKit.Xunit
 ```
 
 !!! note
-    Use xUnit 2.9.3 with `xunit.runner.visualstudio` 2.8.2. xUnit 3.x is **not compatible** with `TestKit.Xunit`.
+    `TestKit.Xunit` is built on the **xUnit v2 framework** (`xunit.core` 2.9.3), so reference `xunit` 2.9.3; the xUnit v3 framework packages are **not compatible**. The test *runner* is a separate package: `xunit.runner.visualstudio` 3.x runs xUnit v2 tests and is fine on net8.0 and later; on older test targets (net462 to net7.0) use 2.8.2, because runner 3.x no longer supports them.
 
 ## Available Packages
 
