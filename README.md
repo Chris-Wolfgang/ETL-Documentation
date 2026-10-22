@@ -1,5 +1,7 @@
 # Wolfgang.Etl Framework Documentation
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Chris-Wolfgang/ETL-Documentation/badge)](https://scorecard.dev/viewer/?uri=github.com/Chris-Wolfgang/ETL-Documentation)
+
 Comprehensive guides, architecture reference, and cookbook for the [Wolfgang.Etl](https://github.com/Chris-Wolfgang) framework.
 
 **Live site:** [https://Chris-Wolfgang.github.io/ETL-Documentation/](https://Chris-Wolfgang.github.io/ETL-Documentation/)
