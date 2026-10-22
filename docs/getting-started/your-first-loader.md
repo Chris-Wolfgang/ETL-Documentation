@@ -26,7 +26,7 @@ Your source project needs:
 
 There are two ways to build a loader:
 
-1. **Inherit from `LoaderBase<TDestination, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `LoadWorkerAsync` method. This guide focuses on this path.
+1. **Inherit from `LoaderBase<TDestination, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, configuration validation, progress timer setup) and leaves you to implement a single `LoadWorkerAsync` method. This guide focuses on this path.
 2. **Implement one of the loader interfaces directly** — for full control. You get to decide exactly how every piece of the loader behaves, at the cost of implementing everything yourself.
 
 ### The Four Loader Interfaces
@@ -44,7 +44,7 @@ Implement only the interface your loader actually needs — a loader that does n
 
 ### When to Use the Base Class
 
-Use `LoaderBase<TDestination, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, honors `SkipItemCount` and `MaximumItemCount` consistently, and gives you the timer-injection pattern needed to test progress reporting.
+Use `LoaderBase<TDestination, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, validates `SkipItemCount`, `MaximumItemCount` and `ReportingInterval`, runs the progress timer, and lets the TestKit contract tests drive progress deterministically. If you do not need a custom progress type, inherit `LoaderBase<TDestination>` instead (progress type fixed to `Report`, `CreateProgressReport()` supplied).
 
 Hand-implementing the interfaces is valid and supported — for example, if you are wrapping a third-party writer with its own async loop and cannot match the base-class lifecycle — but you are responsible for matching the contract that other loaders implement. The contract test base classes in `TestKit.Xunit` (see Step 6) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
 
@@ -82,13 +82,11 @@ public class JsonLineLoader<TRecord> : LoaderBase<TRecord, JsonReport>
     where TRecord : notnull
 {
     private readonly Stream _stream;
-    private readonly JsonSerializerOptions? _options;
+    private readonly JsonSerializerOptions? _serializerOptions;
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
-    private int _progressTimerWired;
 ```
 
-The guard is an `int` rather than a `bool` so it can be set atomically with `Interlocked.CompareExchange` in Step 5 — the `CreateProgressTimer` override may be entered from more than one thread if a caller starts multiple progress-reporting operations concurrently.
+As with extractors, the stage-level configuration (`SkipItemCount`, `MaximumItemCount`, `ReportingInterval`, error policy) arrives in a `LoaderOptions` record passed to the base constructor, not in fields of your own.
 
 
 ## Why Streams, Not Files
@@ -126,18 +124,16 @@ Accepting a `Stream` rather than a path costs nothing at the call site (`File.Cr
 
 ## Step 3: Constructors
 
-The same three-constructor pattern as extractors:
+The same pattern as extractors — a minimal constructor and a full one that passes the `LoaderOptions` to the base class:
 
 ```csharp
     public JsonLineLoader
     (
         Stream stream,
-        ILogger<JsonLineLoader<TRecord>> logger
+        ILogger<JsonLineLoader<TRecord>>? logger = null
     )
+        : this(stream, serializerOptions: null, options: null, logger)
     {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = null;
     }
 
 
@@ -145,31 +141,19 @@ The same three-constructor pattern as extractors:
     public JsonLineLoader
     (
         Stream stream,
-        JsonSerializerOptions options,
-        ILogger<JsonLineLoader<TRecord>> logger
+        JsonSerializerOptions? serializerOptions,
+        LoaderOptions? options = null,
+        ILogger<JsonLineLoader<TRecord>>? logger = null
     )
+        : base(options)
     {
         _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-
-
-    internal JsonLineLoader
-    (
-        Stream stream,
-        JsonSerializerOptions options,
-        ILogger logger,
-        IProgressTimer timer
-    )
-    {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
+        _serializerOptions = serializerOptions;
+        _logger = (ILogger?)logger ?? NullLogger.Instance;
     }
 ```
+
+The base constructor validates the `LoaderOptions` values and throws `ArgumentOutOfRangeException` for out-of-range ones; `null` means "use the defaults".
 
 
 ## Step 4: Implement LoadWorkerAsync
@@ -183,6 +167,9 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
         CancellationToken token
     )
     {
+        // Do not pull even one item from the source when the run is already cancelled
+        token.ThrowIfCancellationRequested();
+
         // Explicit encoding and buffer size: the (Stream, leaveOpen:) shorthand is .NET Core 3.0+ only
         using var writer = new StreamWriter(_stream, new UTF8Encoding(false), 4096, leaveOpen: true);
 
@@ -201,7 +188,7 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
                 break;
             }
 
-            var json = JsonSerializer.Serialize(item, _options);
+            var json = JsonSerializer.Serialize(item, _serializerOptions);
             await writer.WriteLineAsync(json).ConfigureAwait(false);
 
             IncrementCurrentItemCount();
@@ -223,12 +210,12 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
 ### Critical Rules
 
 1. **Call `IncrementCurrentItemCount()` exactly once per loaded item**
-2. **Implement `SkipItemCount` and `MaximumItemCount` yourself**
-3. **Respect the `CancellationToken`**
+2. **Implement `SkipItemCount` and `MaximumItemCount` yourself** (the base class validates them but does not apply them)
+3. **Respect the `CancellationToken`** — check it before the first item as well as inside the loop, so an already-cancelled run reads nothing from the source
 4. **Use `.ConfigureAwait(false)` on all await calls**
 
 
-## Step 5: CreateProgressReport and CreateProgressTimer
+## Step 5: CreateProgressReport
 
 Identical pattern to extractors:
 
@@ -239,29 +226,10 @@ Identical pattern to extractors:
             CurrentItemCount,
             CurrentSkippedItemCount
         );
-
-
-
-    protected override IProgressTimer CreateProgressTimer(IProgress<JsonReport> progress)
-    {
-        if (_progressTimer is not null)
-        {
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
+}
 ```
 
-Two things to note about this override:
-
-- **The `Interlocked.CompareExchange` guard prevents duplicate event subscriptions** if `CreateProgressTimer` is called more than once, and does so atomically so it remains correct under concurrent entry. The subscription is wired exactly once regardless of how many threads reach the override.
-- **The fall-through `return base.CreateProgressTimer(progress)` is required.** When no test timer is injected (the production path), the base class default constructs a `SystemProgressTimer` wired to `ReportProgress`, starts it at `ReportingInterval`, and returns it. Omitting the fall-through would leave the production code path without a working timer.
+No timer plumbing is needed: the base class runs the production timer, and TestKit drives progress in tests through the base class (see [TestKit § Progress Timing in Tests](../reference/testkit.md#progress-timing-in-tests)). Earlier versions of this guide added an `IProgressTimer` field, an internal constructor and a `CreateProgressTimer` override for that; leave them out of new loaders.
 
 
 ## Step 6: Write Tests
@@ -288,35 +256,35 @@ public class JsonLineLoaderTests
 
 
 
-    protected override JsonLineLoader<PersonRecord> CreateSut(int itemCount) =>
+    protected override JsonLineLoader<PersonRecord> CreateSut
+    (
+        int itemCount,
+        int maximumItemCount,
+        int skipItemCount,
+        int reportingInterval
+    ) =>
         new
         (
             new MemoryStream(),
-            NullLogger<JsonLineLoader<PersonRecord>>.Instance
+            serializerOptions: null,
+            new LoaderOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
 
 
 
     protected override IReadOnlyList<PersonRecord> CreateSourceItems() => SourceItems;
-
-
-
-    protected override JsonLineLoader<PersonRecord> CreateSutWithTimer
-    (
-        IProgressTimer timer
-    ) =>
-        new
-        (
-            new MemoryStream(),
-            new JsonSerializerOptions(),
-            NullLogger<JsonLineLoader<PersonRecord>>.Instance,
-            timer
-        );
 }
 ```
 
 !!! note
-    `CreateSut` for loaders creates a fresh `MemoryStream` each time. The `itemCount` parameter tells you how many items will be loaded — useful for loaders that pre-allocate. For a JSONL loader, you can ignore it.
+    `CreateSut` for loaders creates a fresh `MemoryStream` each time. The `itemCount` parameter tells you how many items will be loaded — useful for loaders that pre-allocate. For a JSONL loader, you can ignore it. Pass the three configuration values straight through: some contract tests use out-of-range values on purpose and expect construction to throw.
+
+Those two factory methods give you the 46 tests of the `LoaderBase` contract.
 
 
 ## Multi-TFM Considerations
@@ -334,16 +302,15 @@ The `LoadWorkerAsync` above uses the four-argument `StreamWriter` constructor, `
 
 ## Checklist
 
-- [ ] Inherit `LoaderBase<TRecord, TProgress>` with `where TRecord : notnull`
+- [ ] Inherit `LoaderBase<TRecord, TProgress>` (or `LoaderBase<TRecord>`) with `where TRecord : notnull`
+- [ ] Accept a `LoaderOptions?` (or a record derived from it) and pass it to `base(options)`
 - [ ] Implement `LoadWorkerAsync(IAsyncEnumerable<TRecord>, CancellationToken)`
 - [ ] Implement `CreateProgressReport()`
 - [ ] Call `IncrementCurrentItemCount()` exactly once per loaded item
 - [ ] Implement `SkipItemCount` logic
 - [ ] Implement `MaximumItemCount` logic
 - [ ] Respect `CancellationToken`
-- [ ] Add timer injection pattern (internal constructor, `_progressTimerWired` flag)
-- [ ] Override `CreateProgressTimer` with duplicate subscription guard
-- [ ] Test class inherits `LoaderBaseContractTests<TSut, TItem, TProgress>`
+- [ ] Test class inherits `LoaderBaseContractTests<TSut, TItem, TProgress>` and implements the four-argument `CreateSut`
 - [ ] `CreateSourceItems()` returns at least 5 items
 - [ ] Add domain-specific tests for output format and edge cases
 
