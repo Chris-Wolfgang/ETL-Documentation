@@ -237,7 +237,7 @@ Every ETL has a transformer stage. When no transformation is needed — for exam
 - Adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 - It is harder for readers of the code to see the ETL pattern.
 
-Instead, use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers` — a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
+Instead, use [`PassThroughTransformer<T>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) from `Wolfgang.Etl.Transformers` — a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
 
 ```csharp
 using var sourceStream = File.OpenRead("data.jsonl");
@@ -267,7 +267,7 @@ Prefer many small, focused transformers over one large transformer:
 1. **Smaller transformers are easier to test.** Each one has a narrow input/output contract and a single responsibility, which keeps unit tests small and focused.
 2. **Smaller transformers are more reusable.** A transformer that validates an `Address`, for example, can be reused in any ETL that produces an `Address` — you just add conversion transformers on either side to adapt from the ERP/CRM/etc. format to `Address` and back. Composing a complex transformation from smaller pieces across projects is much easier than reusing a monolithic transformer.
 
-When several transformers need to be chained together, compose them with `Then(...)` from `Wolfgang.Etl.Transformers` rather than nesting `TransformAsync` calls manually. Each `Then` call joins two transformers into a `ChainTransformer<TSource, TIntermediate, TDestination>` (or `ChainTransformerWithCancellation<...>` when both sides accept a `CancellationToken`), and the compiler checks that every link lines up:
+When several transformers need to be chained together, compose them with `Then(...)` from `Wolfgang.Etl.Transformers` rather than nesting `TransformAsync` calls manually. Each `Then` call joins two transformers into a [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) (or [`ChainTransformerWithCancellation<...>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformerWithCancellation-3.html) when both sides accept a `CancellationToken`), and the compiler checks that every link lines up:
 
 - The input of the chain is the input of the first transformer.
 - The output of transformer N is the input of transformer N+1.
@@ -293,7 +293,7 @@ await loader.LoadAsync
 
 This gives you a single transformer object you can hand to the loader, while still keeping each step independently testable, reusable, and composable.
 
-To spell the types out, construct the chain directly: `new ChainTransformerWithCancellation<SourcePerson, CleanPerson, EnrichedPerson>(new CleanDataTransformer(), new EnrichTransformer())`. The [Transform Chains](../cookbook/transform-chains.md) recipe builds a complete chain from the package's `SelectTransformer` and `WhereTransformer`.
+To spell the types out, construct the chain directly: `new ChainTransformerWithCancellation<SourcePerson, CleanPerson, EnrichedPerson>(new CleanDataTransformer(), new EnrichTransformer())`. The [Transform Chains](../cookbook/transform-chains.md) recipe builds a complete chain from the package's [`SelectTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.SelectTransformer-2.html) and [`WhereTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.WhereTransformer-1.html).
 
 
 ## Interchangeability

@@ -5,7 +5,7 @@ Batch export: stream rows from a database query and write them to a CSV file, ke
 | Stage | Component | Package |
 |-------|-----------|---------|
 | Extract | `DbExtractor<Customer>` | `Wolfgang.Etl.DbClient` |
-| Transform | `SelectTransformer<Customer, CustomerExport>` | `Wolfgang.Etl.Transformers` |
+| Transform | [`SelectTransformer<Customer, CustomerExport>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.SelectTransformer-2.html) | `Wolfgang.Etl.Transformers` |
 | Load | `CsvLoader<CustomerExport>` | `Wolfgang.Etl.Csv` |
 
 ```bash
@@ -100,7 +100,7 @@ Rows stream from the data reader through the transformer into the file one at a 
 ## Variations
 
 - **JSON instead of CSV.** Replace the loader with `JsonSingleStreamLoader<CustomerExport>` (one JSON array) or `JsonLineLoader<CustomerExport>` (one object per line) from `Wolfgang.Etl.Json`; both take a `Stream` rather than a `StreamWriter`. [Your First ETL](../getting-started/your-first-etl.md) shows the JSON version end to end.
-- **No reshaping needed.** If the file should have exactly the extractor's columns, use `PassThroughTransformer<Customer>` (also in `Wolfgang.Etl.Transformers`) and load `Customer` directly.
+- **No reshaping needed.** If the file should have exactly the extractor's columns, use [`PassThroughTransformer<Customer>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) (also in `Wolfgang.Etl.Transformers`) and load `Customer` directly.
 - **Query parameters.** Use the `DbExtractor<T>` constructor that takes an `IDictionary<string, object>` of parameters rather than concatenating values into the SQL text.
 - **A compressed export.** Wrap the output file stream in a `GZipStream` and give the `StreamWriter` that stream; see [Reading and Writing Compressed Files and Streams](../guides/compressed-streams.md).
 

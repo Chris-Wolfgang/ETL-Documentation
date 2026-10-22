@@ -111,7 +111,7 @@ await loader.LoadAsync
 );
 ```
 
-`Then(...)` builds a `ChainTransformer<TSource, TIntermediate, TDestination>` for each link. Construct `ChainTransformer` directly when you prefer explicit types, and use `ChainTransformerWithCancellation` (or the `Then` overload for `ITransformWithCancellationAsync` pairs) when every stage in the chain accepts a `CancellationToken`.
+`Then(...)` builds a [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) for each link. Construct [`ChainTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) directly when you prefer explicit types, and use [`ChainTransformerWithCancellation`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformerWithCancellation-3.html) (or the `Then` overload for `ITransformWithCancellationAsync` pairs) when every stage in the chain accepts a `CancellationToken`.
 
 
 ## Why chain instead of one big transformer

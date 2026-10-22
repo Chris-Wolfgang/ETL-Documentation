@@ -48,7 +48,7 @@ Converts items from one type to another. Receives `IAsyncEnumerable<TSource>` an
 - Implement `TransformWorkerAsync(IAsyncEnumerable<TSource>, CancellationToken)`
 - Same counting and skip/max rules as extractors
 
-In practice, transformers tend to fall at one of two extremes: very simple (e.g. `PassThroughTransformer<T>` or `SelectTransformer<TSource, TDestination>`) or very complex business-logic-heavy mappings — there is rarely much in the middle. Because a transformer takes `IAsyncEnumerable<TSource>` in and yields `IAsyncEnumerable<TDestination>` out, you can fully unit-test it in isolation, without connecting it to a real extractor or loader. A `TestExtractor<T>` or a hand-rolled `IAsyncEnumerable<T>` source is enough.
+In practice, transformers tend to fall at one of two extremes: very simple (e.g. [`PassThroughTransformer<T>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) or [`SelectTransformer<TSource, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.SelectTransformer-2.html)) or very complex business-logic-heavy mappings — there is rarely much in the middle. Because a transformer takes `IAsyncEnumerable<TSource>` in and yields `IAsyncEnumerable<TDestination>` out, you can fully unit-test it in isolation, without connecting it to a real extractor or loader. A `TestExtractor<T>` or a hand-rolled `IAsyncEnumerable<T>` source is enough.
 
 Both ship in the `Wolfgang.Etl.Transformers` package, together with filtering, de-duplication, batching and composition transformers — see [ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
 
