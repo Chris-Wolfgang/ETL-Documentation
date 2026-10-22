@@ -8,8 +8,8 @@ For the timer-injection pattern applied to a specific component, see [Your First
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `Wolfgang.Etl.TestKit` | 0.5.0 | Test doubles: `TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` |
-| `Wolfgang.Etl.TestKit.Xunit` | 0.5.0 | Contract test base classes for xUnit |
+| `Wolfgang.Etl.TestKit` | 0.26.1 | Test doubles: `TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` |
+| `Wolfgang.Etl.TestKit.Xunit` | 0.26.1 | Contract test base classes for xUnit |
 
 
 ## Why Use TestKit?
@@ -277,14 +277,15 @@ With just the three factory methods, the base class provides 20+ tests covering 
 In your test project `.csproj`:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.TestKit" Version="0.5.0" />
-<PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.5.0" />
+<PackageReference Include="Wolfgang.Etl.TestKit" Version="0.26.1" />
+<PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.26.1" />
 <PackageReference Include="xunit" Version="2.9.3" />
-<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+<!-- net8.0 and later: runner 3.x. Test projects that also target net462 to net7.0: 2.8.2 -->
+<PackageReference Include="xunit.runner.visualstudio" Version="3.0.1" />
 ```
 
-!!! warning "Use xunit 2.x, not 3.x"
-    xunit v3 is incompatible with the TestKit.Xunit contract test base classes.
+!!! warning "Use the xUnit v2 framework, not v3"
+    The TestKit.Xunit contract test base classes are built on the xUnit v2 framework (`xunit.core` 2.9.3); the xUnit v3 framework packages are incompatible. The *runner* is different: `xunit.runner.visualstudio` 3.x runs v2 tests and works on net8.0 and later, while test projects that also target net462 to net7.0 need runner 2.8.2 for those targets.
 
 
 ## TItem Must Support Value Equality

@@ -147,7 +147,7 @@ For per-library exception-catching recipes, see each library's README:
 - [ETL-FixedWidth README](https://github.com/Chris-Wolfgang/ETL-FixedWidth#readme)
 - [ETL-Json README](https://github.com/Chris-Wolfgang/ETL-Json#readme)
 - [ETL-Xml README](https://github.com/Chris-Wolfgang/ETL-Xml#readme)
-- [ETL-DbClient README](https://github.com/Chris-Wolfgang/ETL-DbClient#readme)
+- [Etl-DbClient README](https://github.com/Chris-Wolfgang/Etl-DbClient#readme)
 
 
 ## See Also

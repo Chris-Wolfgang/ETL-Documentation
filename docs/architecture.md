@@ -119,7 +119,7 @@ Implement three factory methods (`CreateSut`, `CreateExpectedItems`/`CreateSourc
 
 | Project Type | Target Frameworks |
 |-------------|-------------------|
-| Source libraries | `net462;net481;netstandard2.0;net8.0;net10.0` |
+| Source libraries | `net462;net481;netstandard2.0;net5.0;net6.0;net7.0;net8.0;net10.0` (Json, Xml, FixedWidth, SqlBulkCopy, TestKit); Abstractions, ErrorPolicies, DbClient and Transformers add `net472;net48;net9.0`; Csv targets `net462;netstandard2.0;netstandard2.1;net5.0;net6.0;net7.0;net8.0;net10.0` |
 | Test projects | `net462;net47;net471;net472;net48;net481;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0` |
 
-Source libraries target `netstandard2.0` for maximum compatibility and `net8.0`/`net10.0` for span-based optimizations. Test projects target the full matrix to verify behavior across all supported runtimes.
+Source libraries target `netstandard2.0` for maximum compatibility, .NET Framework TFMs so they are tested on .NET Framework directly, and each modern .NET TFM so newer APIs (span-based and cancellation-aware overloads) are used where they exist. Test projects target the full matrix to verify behavior across all supported runtimes.
