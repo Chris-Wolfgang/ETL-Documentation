@@ -74,9 +74,21 @@ Every progress type derives from the `Report` base class in `Wolfgang.Etl.Abstra
 ```csharp
 public record Report
 {
+    public Report(int currentItemCount);
+    public Report(int currentItemCount, DateTimeOffset? startedAt, TimeSpan elapsed, int? totalItemCount = null);
+
     public int CurrentItemCount { get; }
+    public DateTimeOffset? StartedAt { get; init; }   // when the first item was processed
+    public TimeSpan Elapsed { get; init; }            // time since then
+    public int? TotalItemCount { get; init; }         // set it when the total is known up front
+
+    public double ItemsPerSecond { get; }             // derived from CurrentItemCount and Elapsed
+    public double? PercentComplete { get; }           // null unless TotalItemCount is set
+    public TimeSpan? EstimatedRemaining { get; }      // null unless TotalItemCount is set
 }
 ```
+
+(Signatures only.) A stage fills the timing values by calling the four-argument constructor from `CreateProgressReport()` with the base class's protected `StartedAt` and `Elapsed`; the convenience bases `ExtractorBase<TSource>`, `TransformerBase<TSource, TDestination>` and `LoaderBase<TDestination>` already do this.
 
 Each library defines its own `Report` subclass with properties relevant to that format — line numbers for FixedWidth, command text and elapsed time for DbClient, skipped-item counts for JSON and XML, and so on. See the catalog entry for each library for the specific properties:
 
