@@ -30,6 +30,14 @@ Comprehensive guides, architecture reference, and cookbook for the [Wolfgang.Etl
 pip install -r requirements.txt
 ```
 
+`requirements.txt` is a hash-locked closure generated from `requirements.in`, so `pip` installs exactly the
+pinned versions. To change a version, edit `requirements.in` and regenerate:
+
+```bash
+pip install pip-tools
+pip-compile --generate-hashes --strip-extras --output-file=requirements.txt requirements.in
+```
+
 ### Serve locally
 
 ```bash
