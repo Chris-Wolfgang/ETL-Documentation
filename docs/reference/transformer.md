@@ -20,10 +20,10 @@ The transformer is the second step in the ETL process, converting data from the 
 
     The `AddressValidator` in the middle is reusable across every ETL that works with addresses. The shape-conversion transformers on either side are application-specific and small enough to be easy to write and test.
 
-    Use `MultistepTransformer` to compose a chain like this into a single transformer you can hand to the loader — see [Pipeline Composition § Chaining Transformers](../guides/pipeline-composition.md#chaining-transformers).
+    Use `Then(...)` / `ChainTransformer<TSource, TIntermediate, TDestination>` from `Wolfgang.Etl.Transformers` to compose a chain like this into a single transformer you can hand to the loader — see [Pipeline Composition § Chaining Transformers](../guides/pipeline-composition.md#chaining-transformers).
 
     !!! note "Wolfgang.Etl.Transformers"
-        Generic transformers that are broadly reusable (validators, format converters, pass-through) live in `Wolfgang.Etl.Transformers`. This package is under active development — see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
+        Generic transformers that are broadly reusable (validators, format converters, pass-through) live in the published `Wolfgang.Etl.Transformers` package: pass-through, select / where / distinct / chunk / take / skip, buffering, throttling and chaining — see [Chris-Wolfgang/ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
 1. Each `Transformer<TSource, TDestination>` should be interchangeable for any other `Transformer<TSource, TDestination>`, where `TSource` and `TDestination` are of the same type. This allows your application to swap transformers at compile time or runtime, making your ETL more flexible.
 1. A transformer is responsible for handling any exceptions that may occur during the transformation process, including but not limited to invalid values and missing values.
 1. The data to transform is received as an asynchronous stream of type `TSource`, transformed, and returned as an asynchronous stream of type `TDestination`, allowing for efficient processing by any additional transformer(s) and the loader.

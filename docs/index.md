@@ -58,8 +58,6 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 
     Connecting the loader directly to the extractor is an antipattern: it breaks the three-stage shape the rest of the framework is built around, and adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 
-!!! note "PassThroughTransformer<T> is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through `TransformerBase<T, T, TProgress>` subclass whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
 
 ## Quick Links
 
