@@ -416,15 +416,17 @@ await foreach (var person in extractor.ExtractAsync(progress, cancellationToken)
 
 ## Multi-TFM Considerations
 
-If targeting older frameworks (netstandard2.0, net462), some APIs do not support `CancellationToken` overloads. Use `#if` preprocessor directives:
+Some `CancellationToken` overloads exist only on newer frameworks. `StreamReader.ReadLineAsync(CancellationToken)` arrived in .NET 7, so a library that also targets netstandard2.0, net462 or net5.0 / net6.0 must guard it with the `_OR_GREATER` symbol rather than listing the older targets:
 
 ```csharp
-#if NETSTANDARD2_0 || NET462 || NET481
-    while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) is not null)
-#else
+#if NET7_0_OR_GREATER
     while ((line = await reader.ReadLineAsync(token).ConfigureAwait(false)) is not null)
+#else
+    while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) is not null)
 #endif
 ```
+
+On the older targets, call `token.ThrowIfCancellationRequested()` inside the loop so cancellation is still observed between lines.
 
 
 ## Checklist

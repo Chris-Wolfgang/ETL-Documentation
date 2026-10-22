@@ -34,7 +34,7 @@ Records can be bound via hand-written SQL, parameterized SQL, or auto-generated 
 await using var connection = new SqlConnection(connectionString);
 await connection.OpenAsync(cancellationToken);
 
-var extractor = new DbExtractor<CustomerRecord, DbReport>
+var extractor = new DbExtractor<CustomerRecord>
 (
     connection,
     "SELECT id, first_name, last_name FROM customers WHERE active = @active",

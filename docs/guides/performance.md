@@ -23,7 +23,7 @@ When a library offers both a `Stream` constructor and a `TextReader` constructor
 ```csharp
 // Preferred: use the Stream constructor
 using var stream = File.OpenRead("data.txt");
-var extractor = new FixedWidthExtractor<MyRecord, FixedWidthReport>(stream, logger);
+var extractor = new FixedWidthExtractor<MyRecord>(stream, logger: logger);
 
 // Alternative: manual large buffer with TextReader constructor
 using var stream = File.OpenRead("data.txt");
@@ -34,7 +34,7 @@ using var reader = new StreamReader
     detectEncodingFromByteOrderMarks: true,
     bufferSize: 65536
 );
-var extractor = new FixedWidthExtractor<MyRecord, FixedWidthReport>(reader, logger);
+var extractor = new FixedWidthExtractor<MyRecord>(reader, logger);
 ```
 
 ### Use SkipItemCount and MaximumItemCount instead of LINQ
