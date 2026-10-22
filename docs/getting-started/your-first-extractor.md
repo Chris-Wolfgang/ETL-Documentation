@@ -7,7 +7,7 @@ This guide walks through building a complete extractor from scratch, using `Json
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.10.2" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
 ```
 
 Plus whatever libraries your extractor needs to read its format (e.g. `System.Text.Json` for JSON).

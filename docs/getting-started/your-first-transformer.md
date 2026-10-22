@@ -10,7 +10,7 @@ By the end you will have a fully tested transformer that demonstrates the typica
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.10.2" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
 ```
 
 
