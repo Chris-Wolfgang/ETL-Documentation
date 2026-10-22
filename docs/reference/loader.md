@@ -67,8 +67,6 @@ Asynchronously enumerates the items passed in and writes them to the destination
 
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task) — a task that represents the asynchronous operation. The task will complete when all items have been written to the destination.
 
-**Introduced in:** 0.4.0
-
 
 ### ILoadWithCancellationAsync
 
@@ -95,8 +93,6 @@ Asynchronously enumerates the items passed in and writes them to the destination
 ##### Returns
 
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task) — a task that represents the asynchronous operation. The task will complete when all items have been written to the destination.
-
-**Introduced in:** 0.4.0
 
 
 ### ILoadWithProgressAsync\<TDestination, TProgress\>
@@ -126,8 +122,6 @@ Asynchronously enumerates the items passed in and writes them to the destination
 ##### Returns
 
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task) — a task that represents the asynchronous operation. The task will complete when all items have been written to the destination.
-
-**Introduced in:** 0.4.0
 
 
 ### ILoadWithProgressAndCancellationAsync\<TDestination, TProgress\>
@@ -159,8 +153,6 @@ Asynchronously enumerates the items passed in and writes them to the destination
 ##### Returns
 
 [`Task`](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-threading-tasks-task) — a task that represents the asynchronous operation. The task will complete when all items have been written to the destination.
-
-**Introduced in:** 0.4.0
 
 
 ## LoaderBase\<TDestination, TProgress\>
@@ -213,8 +205,6 @@ Read-only. The current number of items that have been loaded. This property is u
 
 `0`.
 
-**Introduced in:** 0.4.0
-
 
 #### MaximumItemCount
 
@@ -234,8 +224,6 @@ The maximum number of items to be loaded before exiting and reporting complete. 
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### ReportingInterval
 
@@ -253,8 +241,6 @@ The number of milliseconds between progress reports. This property can be used t
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
-**Introduced in:** 0.4.0
-
 
 #### SkipItemCount
 
@@ -271,8 +257,6 @@ The number of items to skip before writing items. This property can be used to i
 ##### Exceptions
 
 [`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 0.
-
-**Introduced in:** 0.4.0
 
 
 ### Methods
@@ -360,8 +344,6 @@ Writes data to the destination asynchronously with both progress reporting and c
 ##### Exceptions
 
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) — thrown when the `progress` parameter is null.
-
-**Introduced in:** 0.4.0
 
 
 ## LoaderBase\<TDestination\>
