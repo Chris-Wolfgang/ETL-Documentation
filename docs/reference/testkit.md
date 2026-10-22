@@ -1,15 +1,13 @@
 # TestKit
 
-API reference for the `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` packages. These provide test doubles and contract test base classes for verifying that your extractors, transformers, and loaders conform to the expected behavior defined by the Abstractions.
-
-For the timer-injection pattern applied to a specific component, see [Your First Extractor](../getting-started/your-first-extractor.md#step-6-override-createprogresstimer) and [Your First Loader](../getting-started/your-first-loader.md#step-5-createprogressreport-and-createprogresstimer).
+API reference for the `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` packages. These provide test doubles and contract test base classes for verifying that your extractors, transformers, and loaders conform to the expected behavior defined by the Abstractions. Both packages ship from the [ETL-Abstractions](https://github.com/Chris-Wolfgang/ETL-Abstractions) repository, in the same release as `Wolfgang.Etl.Abstractions`.
 
 ## Packages
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `Wolfgang.Etl.TestKit` | 0.26.1 | Test doubles: `TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` |
-| `Wolfgang.Etl.TestKit.Xunit` | 0.26.1 | Contract test base classes for xUnit |
+| `Wolfgang.Etl.TestKit` | 0.26.1 | Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`, fault / delay / retry / snapshot doubles) and deterministic timing helpers (`ManualProgressTimerCore`, `ManualTimeSource`) |
+| `Wolfgang.Etl.TestKit.Xunit` | 0.26.1 | Contract test base classes for xUnit, plus `ManualProgressTimer`, `SynchronousProgress<T>`, `ProgressCapture<T>` and `ProgressAssert` |
 
 
 ## Why Use TestKit?
@@ -19,10 +17,10 @@ When you build a custom extractor, transformer, or loader, the base classes in `
 1. Your worker methods correctly call `IncrementCurrentItemCount()` for each item
 2. `SkipItemCount` and `MaximumItemCount` are respected
 3. Cancellation tokens are honored
-4. Progress reporting works through the timer injection pattern
-5. Constructor validation rejects null arguments
+4. Progress reporting works
+5. Configuration values out of range are rejected at construction
 
-The contract test base classes in `TestKit.Xunit` test **all of this automatically**. You implement three factory methods, and the base class provides 20+ test cases that verify your implementation against the contract.
+The contract test base classes in `TestKit.Xunit` test **all of this automatically**. You implement two factory methods, and the base class provides more than 40 test cases (43 for extractors, 46 for loaders, 48 for transformers) that verify your implementation against the contract.
 
 
 ## Contract Test Base Classes
@@ -35,21 +33,29 @@ Use this base class to test any class that inherits from `ExtractorBase<TSource,
 
 | Method | Description |
 |--------|-------------|
-| `CreateSut(int itemCount)` | Create an instance of your extractor configured to yield exactly `itemCount` items |
-| `CreateExpectedItems()` | Return a list of **at least 5** expected items with value equality |
-| `CreateSutWithTimer(IProgressTimer timer)` | Create an instance with an injected `IProgressTimer` for testing progress reporting |
+| `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` | Create an instance of your extractor that yields exactly `itemCount` items, configured with the three values (pass them straight through to your options record without validating them — some tests pass out-of-range values on purpose and expect construction to throw `ArgumentOutOfRangeException`) |
+| `CreateExpectedItems()` | Return a list of **at least 5** expected items with value equality; the first `itemCount` of them are what `CreateSut` must yield |
+
+#### Optional and Deprecated Members
+
+| Member | Description |
+|--------|-------------|
+| `CreateSut(int itemCount)` | Non-virtual convenience for your own tests: calls the four-argument `CreateSut` with the defaults (`int.MaxValue`, `0`, `1000`) |
+| `CreateSutOverSource(IEnumerable<TItem> source, int maximumItemCount)` | Virtual. Override to return an extractor that reads from `source` and the base class adds "no over-read" tests (it stops pulling once `MaximumItemCount` is reached). The default returns `null`, which skips those tests |
+| `CreateSutWithTimer(IProgressTimer timer)` | **Deprecated** — virtual and no longer called by the contract. Progress timing is driven through `ManualProgressTimerCore` (see [Progress Timing in Tests](#progress-timing-in-tests)), so remove existing overrides |
 
 #### What the Base Class Tests
 
 - All four `ExtractAsync` overloads (plain, cancellation, progress, progress+cancellation)
 - `CancellationToken` stops extraction mid-sequence
 - An already-cancelled token throws `OperationCanceledException` immediately
-- `CurrentItemCount` increments for each yielded item
+- `CurrentItemCount` increments for each yielded item and resets per run
 - `ReportingInterval` defaults to 1000 and rejects values less than 1
 - `MaximumItemCount` stops extraction at the limit and rejects values less than 1
 - `SkipItemCount` skips the first N items and rejects values less than 0
-- Progress callbacks fire when the timer fires
+- Progress callbacks fire when the timer ticks
 - Empty source handling works correctly
+- `CurrentErrorItemCount` starts at 0
 
 
 ### LoaderBaseContractTests\<TSut, TItem, TProgress\>
@@ -60,9 +66,10 @@ Use this base class to test any class that inherits from `LoaderBase<TDestinatio
 
 | Method | Description |
 |--------|-------------|
-| `CreateSut(int itemCount)` | Create an instance of your loader (the `itemCount` parameter indicates how many items will be loaded) |
+| `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` | Create an instance of your loader configured with the three values (`itemCount` says how many items will be loaded) |
 | `CreateSourceItems()` | Return a list of **at least 5** source items with value equality |
-| `CreateSutWithTimer(IProgressTimer timer)` | Create an instance with an injected `IProgressTimer` |
+
+`CreateSut(int itemCount)` and the deprecated `CreateSutWithTimer` work as for extractors.
 
 #### What the Base Class Tests
 
@@ -71,34 +78,77 @@ Use this base class to test any class that inherits from `LoaderBase<TDestinatio
 - `CancellationToken` stops loading mid-sequence
 - `CurrentItemCount` increments for each loaded item
 - `MaximumItemCount`, `SkipItemCount` validation and behavior
-- Progress callbacks fire deterministically with `ManualProgressTimer`
+- Progress callbacks fire deterministically
 - Empty source handling
 
 
 ### TransformerBaseContractTests\<TSut, TItem, TProgress\>
 
-Same pattern as the extractor tests. Implement `CreateSut`, `CreateExpectedItems`, and `CreateSutWithTimer`.
+Same pattern as the extractor tests, for a `TransformerBase<TItem, TItem, TProgress>` (the contract feeds items in and expects the same type out). Implement the four-argument `CreateSut` and `CreateExpectedItems`.
+
+
+### Other Contract Test Base Classes
+
+`Wolfgang.Etl.TestKit.Xunit` also ships narrower and opt-in contracts. Each is an abstract xUnit class you derive from in the same way.
+
+| Class | Verifies |
+|-------|----------|
+| `ExtractAsyncContractTests<TSut, TItem>` and the `ExtractWith...`, `LoadAsync...`, `LoadWith...`, `TransformAsync...`, `TransformWith...` variants | A component that implements one of the framework interfaces directly, without deriving from a base class |
+| `CancellationContractTests<TSut>` | The stage stops promptly after cancellation instead of draining its source |
+| `DisposableStageContractTests<TSut>` | `Dispose` / `DisposeAsync` behaviour, and that a disposed stage throws `ObjectDisposedException` |
+| `ErrorHandlingContractTests<TSut>` | The per-item error hook (`OnItemError` / `HandleItemError`, `CurrentErrorItemCount`) |
+| `RetryContractTests<TSut>` | A `WrapWorkerExecution` retry override recovers from a transient fault and gives up on a permanent one |
+| `IdempotentExtractorContractTests<TSut, TItem, TProgress>`, `IdempotentLoaderContractTests<TSut, TItem>`, `IdempotentTransformerContractTests<TSut, TItem>` | Running the stage twice produces the same result |
+| `AllocationBudgetContractTests<TSut>` | The hot path stays within a declared per-item allocation budget |
+| `SupportsDryRunContractTests` | A stage in dry-run mode runs its pipeline without the destination side effect |
+| `EtlPipelineContractTests<TItem, TProgress>` | Composition through `EtlPipeline.Create().From(...).To(...).RunAsync()` and the `EtlPipelineProgress` it reports |
+
+
+## Test Doubles
+
+All in `Wolfgang.Etl.TestKit`.
+
+| Class | Purpose |
+|-------|---------|
+| `TestExtractor<T>` | Yields items from an `IEnumerable<T>`, an `IEnumerator<T>` or a factory delegate |
+| `TestTransformer<T>` | Passes items through unchanged |
+| `TestLoader<T>` | Consumes the stream; with `collectItems: true` exposes what it received via `GetCollectedItems()` |
+| `FaultyExtractor<T>`, `FaultyTransformer<T>`, `FaultyLoader<T>` | Like the doubles above, but inject deterministic faults (throw at a given item, after completion, ...) for error-path tests |
+| `DelayingExtractor<T>` | Waits a configurable delay before each item — for timeout, cancellation and progress-cadence tests |
+| `RetryingExtractor<T>` | Fails its first N worker runs with a transient fault, then succeeds — for retry tests |
+| `SnapshotTestLoader<T>` | Captures items and renders a deterministic, diff-friendly snapshot string for approval tests |
+| `RecordingMiddleware<T>` | An `IItemMiddleware<T>` that records every item it sees |
 
 
 ## Test Helpers
 
-### ManualProgressTimer
+### Progress Timing in Tests
 
-A test double for `IProgressTimer` that gives you deterministic control over when progress callbacks fire.
+The base classes create their progress timer when a run starts. To make progress callbacks deterministic, attach a `ManualProgressTimerCore` (namespace `Wolfgang.Etl.TestKit`) with the `WithManualProgressTimer` extension before the run, then call `Tick()` whenever you want a report:
 
 ```csharp
-var timer = new ManualProgressTimer();
+var timer = new ManualProgressTimerCore();
+var extractor = new TestExtractor<int>(new[] { 1, 2, 3 }).WithManualProgressTimer(timer);
 
-// ... start an extraction or load operation ...
-
-timer.Fire();  // Synchronously triggers the Elapsed event
+await using var e = extractor.ExtractAsync(progress).GetAsyncEnumerator();
+await e.MoveNextAsync();
+timer.Tick();            // fires the progress callback exactly once
 ```
 
-In production, `SystemProgressTimer` fires on a background thread at the configured `ReportingInterval`. During tests, `ManualProgressTimer` lets you fire the event exactly when you want, making assertions deterministic.
+`WithManualProgressTimer` has overloads for `ExtractorBase`, `TransformerBase` and `LoaderBase` and reaches the base class's internal timer seam, so **your component needs no timer-injection plumbing** — no `IProgressTimer` field, internal constructor or `CreateProgressTimer` override. The contract base classes use this mechanism themselves.
 
-### SynchronousProgress\<T\>
+Likewise, `ManualTimeSource` plus `WithTimeSource(...)` freezes the clock behind `Report.Elapsed`, `ItemsPerSecond`, `PercentComplete` and `EstimatedRemaining`; call `Advance(TimeSpan)` to move it.
 
-A test double for `IProgress<T>` that invokes the callback synchronously on the calling thread, unlike `Progress<T>` which dispatches through `SynchronizationContext`.
+!!! note "Earlier releases: the timer-injection pattern"
+    Before `ManualProgressTimerCore`, each component carried an `IProgressTimer? _progressTimer` field, an internal constructor taking an `IProgressTimer`, and a `CreateProgressTimer` override, so tests could inject `ManualProgressTimer` and the contract could call `CreateSutWithTimer`. That pattern still compiles, but the contract no longer uses it; new components should leave it out.
+
+### ManualProgressTimer
+
+`Wolfgang.Etl.TestKit.Xunit.ManualProgressTimer` is an `IProgressTimer` whose `Elapsed` event fires synchronously when you call `Fire()`. Use it when you test code that takes an `IProgressTimer` directly.
+
+### SynchronousProgress\<T\> and ProgressCapture\<T\>
+
+Both are `IProgress<T>` implementations in `Wolfgang.Etl.TestKit.Xunit` that run on the calling thread, unlike `Progress<T>` which dispatches through `SynchronizationContext`. `SynchronousProgress<T>` invokes a callback; `ProgressCapture<T>` records every report so `ProgressAssert` can make assertions over the sequence.
 
 ```csharp
 var reports = new List<JsonReport>();
@@ -106,83 +156,12 @@ var progress = new SynchronousProgress<JsonReport>(report => reports.Add(report)
 ```
 
 
-## Timer Injection Pattern
-
-The contract tests need to inject a `ManualProgressTimer` into your component. Since this is test-only plumbing, the pattern uses an `internal` constructor exposed to the test project via `InternalsVisibleTo`.
-
-### Step 1: Add the fields to your class
-
-```csharp
-public class MyExtractor<TRecord> : ExtractorBase<TRecord, MyReport>
-    where TRecord : notnull
-{
-    private readonly IProgressTimer? _progressTimer;
-    private int _progressTimerWired;
-
-    // ... other fields ...
-}
-```
-
-The guard is an `int` rather than a `bool` so it can be set atomically with `Interlocked.CompareExchange` in Step 3 — the `CreateProgressTimer` override may be entered from more than one thread if a caller starts multiple progress-reporting operations concurrently.
-
-### Step 2: Add the internal constructor
-
-```csharp
-internal MyExtractor
-(
-    Stream stream,
-    JsonSerializerOptions options,
-    ILogger logger,
-    IProgressTimer timer
-)
-{
-    _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-    _options = options ?? throw new ArgumentNullException(nameof(options));
-    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
-}
-```
-
-### Step 3: Override CreateProgressTimer
-
-```csharp
-protected override IProgressTimer CreateProgressTimer(IProgress<MyReport> progress)
-{
-    if (_progressTimer is not null)
-    {
-        if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-        {
-            _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-        }
-
-        return _progressTimer;
-    }
-
-    return base.CreateProgressTimer(progress);
-}
-```
-
-Two things to note about this override:
-
-- **The `Interlocked.CompareExchange` guard prevents duplicate event subscriptions** if `CreateProgressTimer` is called more than once, and does so atomically so it remains correct under concurrent entry. The subscription is wired exactly once regardless of how many threads reach the override.
-- **The fall-through `return base.CreateProgressTimer(progress)` is required.** When no test timer is injected (the production path), the base class default constructs a `SystemProgressTimer` wired to `ReportProgress`, starts it at `ReportingInterval`, and returns it. Omitting the fall-through would leave the production code path without a working timer.
-
-### Step 4: Expose internals to the test project
-
-Create `Properties/AssemblyInfo.cs` in your source project:
-
-```csharp
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("MyProject.Tests.Unit")]
-```
-
-
 ## Complete Example: Testing a JSON Extractor
 
-Here is how `Wolfgang.Etl.Json` tests its `JsonLineExtractor` using the contract tests:
+This is how `Wolfgang.Etl.Json` tests its `JsonLineExtractor` with the contract tests. `JsonLineExtractorOptions` derives from `ExtractorOptions`, so the three configuration values go straight into it:
 
 ```csharp
+using Wolfgang.Etl.Json;
 using Wolfgang.Etl.TestKit.Xunit;
 
 public class JsonLineExtractorTests
@@ -204,6 +183,7 @@ public class JsonLineExtractorTests
     };
 
 
+
     // Helper: create a JSONL stream with the given number of items
     private static MemoryStream CreateJsonlStream(int itemCount)
     {
@@ -215,31 +195,31 @@ public class JsonLineExtractorTests
     }
 
 
-    // Factory: create an extractor that yields exactly itemCount items
-    protected override JsonLineExtractor<PersonRecord> CreateSut(int itemCount) =>
+
+    // Factory: an extractor that yields exactly itemCount items, configured as the contract asks
+    protected override JsonLineExtractor<PersonRecord> CreateSut
+    (
+        int itemCount,
+        int maximumItemCount,
+        int skipItemCount,
+        int reportingInterval
+    ) =>
         new
         (
             CreateJsonlStream(itemCount),
-            NullLogger<JsonLineExtractor<PersonRecord>>.Instance
+            new JsonLineExtractorOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
+
 
 
     // Return the full list of expected items
     protected override IReadOnlyList<PersonRecord> CreateExpectedItems() => ExpectedItems;
 
-
-    // Factory: create an extractor with an injected timer (uses internal constructor)
-    protected override JsonLineExtractor<PersonRecord> CreateSutWithTimer
-    (
-        IProgressTimer timer
-    ) =>
-        new
-        (
-            CreateJsonlStream(ExpectedItems.Count),
-            new JsonSerializerOptions(),
-            NullLogger<JsonLineExtractor<PersonRecord>>.Instance,
-            timer
-        );
 
 
     // Domain-specific tests beyond what the contract covers:
@@ -252,11 +232,7 @@ public class JsonLineExtractorTests
         var content = $"{line1}\n\n  \n{line2}\n";
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var sut = new JsonLineExtractor<PersonRecord>
-        (
-            stream,
-            NullLogger<JsonLineExtractor<PersonRecord>>.Instance
-        );
+        var sut = new JsonLineExtractor<PersonRecord>(stream);
 
         var results = new List<PersonRecord>();
         await foreach (var item in sut.ExtractAsync())
@@ -269,7 +245,7 @@ public class JsonLineExtractorTests
 }
 ```
 
-With just the three factory methods, the base class provides 20+ tests covering the full `ExtractorBase` contract. Your domain-specific tests only need to cover behavior unique to your implementation (blank lines, null deserialization, custom options, etc.).
+With just the two factory methods, the base class provides the full `ExtractorBase` contract. Your domain-specific tests only need to cover behavior unique to your implementation (blank lines, null deserialization, custom options, etc.).
 
 
 ## NuGet References
@@ -307,8 +283,8 @@ See [Your First Extractor § Define your test model](../getting-started/your-fir
 
 ## See Also
 
-- [Your First Extractor](../getting-started/your-first-extractor.md) — step-by-step extractor guide, including the Step 6 `CreateProgressTimer` override
-- [Your First Loader](../getting-started/your-first-loader.md) — step-by-step loader guide, including the Step 5 timer-injection pattern
+- [Your First Extractor](../getting-started/your-first-extractor.md) — step-by-step extractor guide
+- [Your First Loader](../getting-started/your-first-loader.md) — step-by-step loader guide
 - [Extractor](extractor.md) — API reference for extractor interfaces and base class
 - [Loader](loader.md) — API reference for loader interfaces and base class
 - [Transformer](transformer.md) — API reference for transformer interfaces and base class

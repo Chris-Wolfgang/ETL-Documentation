@@ -24,7 +24,7 @@ Relational and bulk-import paths.
 
 Tooling for verifying that your custom extractors, transformers, and loaders honor the framework's contract.
 
-- **[TestKit](testkit.md)** — `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit`. Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`), deterministic test helpers (`ManualProgressTimer`, `SynchronousProgress<T>`), and contract test base classes that verify your custom components honor the framework's contract.
+- **[TestKit](testkit.md)** — `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit`. Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` and fault / delay / retry / snapshot variants), deterministic timing helpers (`ManualProgressTimerCore`, `ManualTimeSource`; `ManualProgressTimer` and `SynchronousProgress<T>` live in `TestKit.Xunit`), and contract test base classes that verify your custom components honor the framework's contract.
 
 ## Related
 

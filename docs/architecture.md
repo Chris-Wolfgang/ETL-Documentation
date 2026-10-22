@@ -63,31 +63,29 @@ Classes derived from `ExtractorBase` and `LoaderBase` are generally reusable acr
 
 ## Report and TProgress
 
-The `Report` base class provides `CurrentItemCount`. Libraries extend it with domain-specific properties:
+The `Report` base class provides `CurrentItemCount` plus timing and rate values (`StartedAt`, `Elapsed`, `TotalItemCount`, `ItemsPerSecond`, `PercentComplete`, `EstimatedRemaining`). Libraries extend it with domain-specific properties:
 
 | Report Type | Library | Extra Properties |
 |-------------|---------|-----------------|
-| `Report` | Abstractions | `CurrentItemCount` |
-| `FixedWidthReport` | FixedWidth | `CurrentSkippedItemCount`, `CurrentLineNumber` |
+| `Report` | Abstractions | `CurrentItemCount`, `StartedAt`, `Elapsed`, `TotalItemCount`, `ItemsPerSecond`, `PercentComplete`, `EstimatedRemaining` |
+| `FixedWidthReport` | FixedWidth | `CurrentSkippedItemCount`, `CurrentLineNumber`, `CurrentFilteredLineCount`, `CurrentRejectedItemCount` |
+| `CsvExtractorProgress` | Csv | `CurrentSkippedItemCount`, `CurrentLineNumber`, `CurrentBadDataCount`, `CurrentInvalidItemCount`, `CurrentErrorItemCount` |
+| `CsvLoaderProgress` | Csv | `CurrentSkippedItemCount`, `CurrentLineNumber`, `CurrentInvalidItemCount` |
 | `DbReport` | DbClient | `CurrentSkippedItemCount`, `CommandText`, `ElapsedMilliseconds` |
-| `JsonReport` | Json | `CurrentSkippedItemCount` |
+| `SqlBulkCopyReport` | SqlBulkCopy | `CurrentSkippedItemCount`, `BatchCount` |
+| `JsonReport` | Json | `CurrentSkippedItemCount`, `CurrentSourceName` |
 | `XmlReport` | Xml | `CurrentSkippedItemCount` |
 
 Progress reports are created by `CreateProgressReport()` and delivered via `IProgress<TProgress>` on a timer thread.
 
 ## IProgressTimer Pattern
 
-The base classes use `IProgressTimer` to abstract the system timer for testability:
+The base classes drive progress callbacks through an `IProgressTimer`, created by the virtual `CreateProgressTimer` method:
 
-- **Production**: `SystemProgressTimer` wraps `System.Threading.Timer`
-- **Testing**: `ManualProgressTimer` (from TestKit) lets you fire the timer on demand
+- **Production**: the built-in timer (an internal type in Abstractions, not part of the public API) wraps `System.Threading.Timer` and fires every `ReportingInterval` milliseconds
+- **Testing**: `ManualProgressTimerCore` from `Wolfgang.Etl.TestKit`, attached with `WithManualProgressTimer(...)`, fires the callback only when the test calls `Tick()`
 
-Each ETL component follows a consistent injection pattern:
-
-1. `private readonly IProgressTimer? _progressTimer` field
-2. `private bool _progressTimerWired` guard flag
-3. `internal` constructor that accepts `IProgressTimer`
-4. `CreateProgressTimer` override that wires the injected timer
+Components no longer need any timer plumbing for tests. Earlier releases used a per-component injection pattern (an `IProgressTimer? _progressTimer` field, an `int _progressTimerWired` guard set with `Interlocked.CompareExchange`, an `internal` constructor taking the timer, and a `CreateProgressTimer` override); it still compiles, but the TestKit contract tests no longer use it. See [TestKit § Progress Timing in Tests](reference/testkit.md#progress-timing-in-tests).
 
 ## The notnull Constraint
 
@@ -101,19 +99,22 @@ All `TRecord`/`TSource`/`TDestination` type parameters require `notnull`. Use cl
 
 | Class | Purpose |
 |-------|---------|
-| [`TestExtractor<T>`](reference/testkit.md) | Yields items from a list — use as a stand-in extractor in integration tests |
-| [`TestLoader<T>`](reference/testkit.md) | Captures loaded items into a list — verify what was written |
-| [`TestTransformer<T>`](reference/testkit.md) | Passes items through unchanged — verify pipeline wiring |
+| [`TestExtractor<T>`](reference/testkit.md#test-doubles) | Yields items from a list — use as a stand-in extractor in integration tests |
+| [`TestLoader<T>`](reference/testkit.md#test-doubles) | Consumes items and optionally collects them — verify what was written |
+| [`TestTransformer<T>`](reference/testkit.md#test-doubles) | Passes items through unchanged — verify pipeline wiring |
+| [`FaultyExtractor<T>` / `FaultyTransformer<T>` / `FaultyLoader<T>`](reference/testkit.md#test-doubles) | Inject deterministic faults — verify error handling |
 
 ### Contract Test Base Classes
 
 | Class | Tests |
 |-------|-------|
-| [`ExtractorBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying ExtractorBase contract |
-| [`LoaderBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying LoaderBase contract |
-| [`TransformerBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 20+ tests verifying TransformerBase contract |
+| [`ExtractorBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 43 tests verifying the ExtractorBase contract |
+| [`LoaderBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 46 tests verifying the LoaderBase contract |
+| [`TransformerBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 48 tests verifying the TransformerBase contract |
 
-Implement three factory methods (`CreateSut`, `CreateExpectedItems`/`CreateSourceItems`, `CreateSutWithTimer`) and the base class provides comprehensive contract verification: all four async overloads, cancellation, skip/max, progress callbacks, empty source handling, and counting correctness.
+`TestKit.Xunit` also has opt-in contracts for cancellation promptness, disposal, error handling, retry, idempotency, allocation budgets, dry-run and `EtlPipeline` composition — see the [TestKit reference](reference/testkit.md#other-contract-test-base-classes).
+
+Implement two factory methods (`CreateSut(itemCount, maximumItemCount, skipItemCount, reportingInterval)` and `CreateExpectedItems`/`CreateSourceItems`) and the base class provides comprehensive contract verification: all four async overloads, cancellation, skip/max, progress callbacks, empty source handling, and counting correctness.
 
 ## Multi-TFM Strategy
 
