@@ -18,7 +18,7 @@ If your use case feels too unusual to be an ETL, it probably still fits the pipe
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.10.2" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
 ```
 
 

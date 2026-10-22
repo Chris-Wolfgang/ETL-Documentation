@@ -161,7 +161,7 @@ Each library has its own performance characteristics and optimizations — span-
 - [ETL-FixedWidth README](https://github.com/Chris-Wolfgang/ETL-FixedWidth#readme)
 - [ETL-Json README](https://github.com/Chris-Wolfgang/ETL-Json#readme)
 - [ETL-Xml README](https://github.com/Chris-Wolfgang/ETL-Xml#readme)
-- [ETL-DbClient README](https://github.com/Chris-Wolfgang/ETL-DbClient#readme)
+- [Etl-DbClient README](https://github.com/Chris-Wolfgang/Etl-DbClient#readme)
 
 If you are processing high volumes and performance is critical, target `net8.0` or later — most libraries have span-based fast paths on newer TFMs that fall back to string-based implementations on netstandard2.0.
 

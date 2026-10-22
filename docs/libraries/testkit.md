@@ -6,9 +6,9 @@ Test doubles and contract test base classes for verifying components built on `W
 |---|---|
 | **NuGet** | `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` |
 | **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.TestKit) ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.TestKit.Xunit) |
-| **Dependencies** | Wolfgang.Etl.Abstractions, Microsoft.Extensions.Logging.Abstractions; `Wolfgang.Etl.TestKit.Xunit` additionally requires xUnit |
-| **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
-| **Source** | [ETL-Test-Kit](https://github.com/Chris-Wolfgang/ETL-Test-Kit) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, System.Linq.Async; `Wolfgang.Etl.TestKit.Xunit` additionally references `Wolfgang.Etl.TestKit` and xUnit v2 (`xunit.core` / `xunit.assert` 2.9.3) |
+| **Target Frameworks** | net462, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net10.0 |
+| **Source** | [ETL-Abstractions](https://github.com/Chris-Wolfgang/ETL-Abstractions) (`src/Wolfgang.Etl.TestKit`, `src/Wolfgang.Etl.TestKit.Xunit`); the older ETL-Test-Kit repository is archived |
 
 ## What it does
 
@@ -61,6 +61,6 @@ That is the entire test class. Inheriting `ExtractorBaseContractTests` provides 
 ## More detail
 
 - **Full reference (this site)** — [TestKit](../reference/testkit.md) covers the complete API: contract test base classes, test helpers, the timer-injection pattern, and an end-to-end worked example.
-- **API reference (source)** — see the [ETL-Test-Kit README](https://github.com/Chris-Wolfgang/ETL-Test-Kit#readme) and XML doc comments on the public types.
+- **API reference (source)** — see the [ETL-Abstractions README](https://github.com/Chris-Wolfgang/ETL-Abstractions#readme) and XML doc comments on the public types.
 - **Examples** — see the `tests/` folder in the source repo for canonical usage of each test double and contract test base class.
-- **Release notes** — [Releases](https://github.com/Chris-Wolfgang/ETL-Test-Kit/releases).
+- **Release notes** — [Releases](https://github.com/Chris-Wolfgang/ETL-Abstractions/releases) (TestKit ships in the same release as Abstractions).
