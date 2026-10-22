@@ -65,8 +65,8 @@ public class EmployeePassThrough : TransformerBase<Employee, Employee, Report>
 }
 ```
 
-!!! note "PassThroughTransformer&lt;T&gt; is a planned class"
-    Once `Wolfgang.Etl.Transformers` ships, this will collapse to a single line: `var transformer = new PassThroughTransformer<Employee>();`. Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1).
+!!! tip "Use the built-in PassThroughTransformer&lt;T&gt; in real code"
+    The class above is written out so you can see what a transformer does. `Wolfgang.Etl.Transformers` ships the same thing ready-made — add the package (`dotnet add package Wolfgang.Etl.Transformers`) and the whole step becomes one line: `var transformer = new PassThroughTransformer<Employee>();`.
 
 
 ## Step 3: Wire and run the pipeline

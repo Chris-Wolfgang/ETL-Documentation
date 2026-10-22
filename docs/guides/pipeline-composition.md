@@ -259,9 +259,6 @@ await loader.LoadAsync
 );
 ```
 
-!!! note "PassThroughTransformer<T> is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through subclass of `TransformerBase<T, T, TProgress>` whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
-
 
 ## Chaining Transformers
 
@@ -270,22 +267,18 @@ Prefer many small, focused transformers over one large transformer:
 1. **Smaller transformers are easier to test.** Each one has a narrow input/output contract and a single responsibility, which keeps unit tests small and focused.
 2. **Smaller transformers are more reusable.** A transformer that validates an `Address`, for example, can be reused in any ETL that produces an `Address` — you just add conversion transformers on either side to adapt from the ERP/CRM/etc. format to `Address` and back. Composing a complex transformation from smaller pieces across projects is much easier than reusing a monolithic transformer.
 
-When several transformers need to be chained together, use `MultistepTransformer` (from `Wolfgang.Etl.Transformers`) rather than nesting `TransformAsync` calls manually. `MultistepTransformer` takes an ordered collection of transformers where:
+When several transformers need to be chained together, compose them with `Then(...)` from `Wolfgang.Etl.Transformers` rather than nesting `TransformAsync` calls manually. Each `Then` call joins two transformers into a `ChainTransformer<TSource, TIntermediate, TDestination>` (or `ChainTransformerWithCancellation<...>` when both sides accept a `CancellationToken`), and the compiler checks that every link lines up:
 
-- The `TSource` of the `MultistepTransformer` matches the input of the first transformer.
-- The output of transformer N matches the input of transformer N+1.
-- The `TDestination` of the `MultistepTransformer` matches the output of the last transformer.
+- The input of the chain is the input of the first transformer.
+- The output of transformer N is the input of transformer N+1.
+- The output of the chain is the output of the last transformer.
 
 ```csharp
-var transformer = new MultistepTransformer<SourcePerson, DestinationContact, TransformerProgressReport>
-(
-    new ITransformAsync<object, object>[]
-    {
-        new CleanDataTransformer(),    // SourcePerson   -> CleanPerson
-        new EnrichTransformer(),       // CleanPerson    -> EnrichedPerson
-        new MapToContactTransformer(), // EnrichedPerson -> DestinationContact
-    }
-);
+using Wolfgang.Etl.Transformers;
+
+var transformer = new CleanDataTransformer()   // SourcePerson   -> CleanPerson
+    .Then(new EnrichTransformer())             // CleanPerson    -> EnrichedPerson
+    .Then(new MapToContactTransformer());      // EnrichedPerson -> DestinationContact
 
 await loader.LoadAsync
 (
@@ -300,8 +293,7 @@ await loader.LoadAsync
 
 This gives you a single transformer object you can hand to the loader, while still keeping each step independently testable, reusable, and composable.
 
-!!! note "MultistepTransformer is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#2](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/2). Until it ships, chain transformers by nesting `TransformAsync` calls manually, with the innermost call receiving the extractor's enumerable.
+To spell the types out, construct the chain directly: `new ChainTransformerWithCancellation<SourcePerson, CleanPerson, EnrichedPerson>(new CleanDataTransformer(), new EnrichTransformer())`. The [Transform Chains](../cookbook/transform-chains.md) recipe builds a complete chain from the package's `SelectTransformer` and `WhereTransformer`.
 
 
 ## Interchangeability

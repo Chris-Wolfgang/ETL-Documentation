@@ -6,7 +6,7 @@ If you are new to the framework, start with [Getting Started](../getting-started
 
 ## Pages in this section
 
-- **[Pipeline Composition](pipeline-composition.md)** — wire an extractor, transformer, and loader into a complete pipeline. Pull-based model, data type flow, inline transformations, `PassThroughTransformer`, chaining with `MultistepTransformer`, interchangeability, and a complete worked example.
+- **[Pipeline Composition](pipeline-composition.md)** — wire an extractor, transformer, and loader into a complete pipeline. Pull-based model, data type flow, inline transformations, `PassThroughTransformer`, chaining with `Then(...)` / `ChainTransformer`, interchangeability, and a complete worked example.
 - **[Error Handling](error-handling.md)** — per-component responsibility, pipeline-level try/catch patterns, cancellation, custom-transformer errors, and pointers to each library's exception hierarchy.
 - **[Progress Reporting](progress-reporting.md)** — the `IProgress<T>` pattern, tuning `ReportingInterval`, custom progress types, monitoring all pipeline stages, console progress bars.
 - **[Custom Parsers & Converters](custom-parsers.md)** — the customization hooks each library exposes, with one example per library and a composition pattern for stacking multiple rules inside a delegate.
