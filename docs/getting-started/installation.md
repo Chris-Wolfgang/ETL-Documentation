@@ -11,7 +11,7 @@
 You can install a [.NET SDK](https://dotnet.microsoft.com/download) for any of those.
 
 !!! note "Per-library requirements may differ"
-    The list above is for `Wolfgang.Etl.Abstractions`. Each extractor, transformer, and loader package has its own target framework matrix and runtime dependencies — check the relevant page under [Libraries](../libraries/index.md) before installing. For example, a library that depends on a third-party client may drop the oldest TFMs.
+    The list above is for `Wolfgang.Etl.Abstractions`. Each extractor, transformer, and loader package has its own target framework matrix and runtime dependencies — check the relevant page under [Libraries](../libraries/index.md) before installing. For example, a library that depends on a third-party client may drop the oldest TFMs, and `Wolfgang.Etl.DbClient` brings in `Dapper` as a transitive dependency.
 
 ## Installing a Library
 

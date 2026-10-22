@@ -10,7 +10,7 @@ By the end you will have a runnable program that demonstrates the framework's th
 - A supported [.NET SDK](https://dotnet.microsoft.com/download). The framework's `Wolfgang.Etl.Abstractions` package runs on .NET Framework 4.6.2+, .NET Core 3.1, and .NET 5+ (or any runtime supporting `netstandard2.0`/`netstandard2.1`). Individual library packages may have a narrower matrix — see [Installation](installation.md) and the relevant [Libraries](../libraries/index.md) page.
 - A SQL Server instance with an `Employees` table (any provider works — `Microsoft.Data.SqlClient` is the default in this example)
 
-Two NuGet packages do all the heavy lifting:
+Three NuGet packages do all the heavy lifting — the two framework libraries and the SQL Server provider:
 
 ```bash
 dotnet add package Wolfgang.Etl.DbClient

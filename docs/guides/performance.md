@@ -18,7 +18,7 @@ This holds true as long as you do not materialize the `IAsyncEnumerable` into a 
 
 ### Use the Stream constructor when available
 
-When a library offers both a `Stream` constructor and a `TextReader` constructor, prefer the `Stream` one — libraries typically configure a larger read buffer internally than the `StreamReader` default (often 1 KB). If you need to use a `TextReader` constructor, wrap your stream in a `StreamReader` with an explicitly larger buffer:
+When a library offers both a `Stream` constructor and a `TextReader` constructor, prefer the `Stream` one — libraries typically configure a larger read buffer internally than the `StreamReader` default buffer. If you need to use a `TextReader` constructor, wrap your stream in a `StreamReader` with an explicitly larger buffer:
 
 ```csharp
 // Preferred: use the Stream constructor
