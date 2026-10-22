@@ -1,0 +1,46 @@
+name: Changelog
+
+# Baseline item 19: run the fleet changelog-fragment check on every pull request.
+# Same job as repo-template's pr.yaml "Changelog Fragment Check", in its own workflow
+# because this repository's pr.yaml only builds the docs. scripts/changelog.ps1 is the
+# unchanged repo-template script: it requires a fragment under changelog/unreleased/
+# when a PR changes src/ (this repository has none) and always validates the format of
+# every fragment present. See changelog/unreleased/README.md.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changelog-check:
+    name: "Changelog Fragment Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check for a changelog fragment
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          # The checkout uses persist-credentials:false, so a bare `git fetch origin` has no
+          # auth on a private repository. Pass the job token on this one command only; it is
+          # never written to git config.
+          TRUSTED_MAIN_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+        run: |
+          git fetch "$env:TRUSTED_MAIN_URL" $env:BASE_SHA --depth=1
+          pwsh ./scripts/changelog.ps1 check -BaseRef $env:BASE_SHA -Labels $env:PR_LABELS
