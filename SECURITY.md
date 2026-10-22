@@ -3,7 +3,7 @@
 ## Supported Versions
 
 This repository publishes the documentation site at
-https://Chris-Wolfgang.github.io/ETL-Documentation/ from the `main` branch. Only the current `main`
+https://chris-wolfgang.github.io/ETL-Documentation/ from the `main` branch. Only the current `main`
 (the live site) is supported; there are no versioned releases. Vulnerabilities in the
 `Wolfgang.Etl.*` packages themselves should be reported on the package's own repository.
 

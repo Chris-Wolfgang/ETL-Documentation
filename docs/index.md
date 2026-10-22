@@ -26,7 +26,7 @@ No intermediate collections. Memory usage stays constant regardless of dataset s
 
 ## Packages
 
-The framework ships as several focused NuGet packages. See [Installation](getting-started/installation.md) for the full list and install commands, or browse [Libraries](libraries/fixedwidth.md) for what each format-specific package does.
+The framework ships as several focused NuGet packages. See [Installation](getting-started/installation.md) for the full list and install commands, or browse [Libraries](libraries/index.md) for what each format-specific package does.
 
 ## Built-in Capabilities
 
@@ -67,5 +67,5 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 - **[Your First Transformer](getting-started/your-first-transformer.md)** — build a custom transformer from scratch
 - **[Your First Loader](getting-started/your-first-loader.md)** — build a custom loader from scratch
 - **[Architecture](architecture.md)** — base classes, interfaces, and design patterns
-- **[Libraries](libraries/fixedwidth.md)** — FixedWidth, DbClient, XML, JSON reference docs
-- **[Guides](guides/pipeline-composition.md)** — pipeline composition, error handling, progress, performance
+- **[Libraries](libraries/index.md)** — FixedWidth, DbClient, XML, JSON and TestKit overviews
+- **[Guides](guides/index.md)** — pipeline composition, error handling, progress, performance
