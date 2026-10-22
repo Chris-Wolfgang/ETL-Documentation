@@ -54,7 +54,7 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 | Loader | 1 | Consumes `IAsyncEnumerable<TDestination>` and writes to the target |
 
 !!! tip "Every ETL has a transformer stage"
-    When no transformation is needed — for example, reading a fixed width file and writing it to a CSV file — use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers`. It pulls each item from the extractor and yields it unchanged, preserving the three-stage shape.
+    When no transformation is needed — for example, reading a fixed width file and writing it to a CSV file — use [`PassThroughTransformer<T>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) from `Wolfgang.Etl.Transformers`. It pulls each item from the extractor and yields it unchanged, preserving the three-stage shape.
 
     Connecting the loader directly to the extractor is an antipattern: it breaks the three-stage shape the rest of the framework is built around, and adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 

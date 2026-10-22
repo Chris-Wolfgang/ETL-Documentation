@@ -357,6 +357,6 @@ await loader.LoadAsync
 - [Your First Extractor](your-first-extractor.md) — build a custom extractor; many of the patterns here mirror that guide
 - [Your First Loader](your-first-loader.md) — build a custom loader
 - [Your First ETL](your-first-etl.md) — wire everything together end-to-end
-- [Pipeline Composition](../guides/pipeline-composition.md) — chaining multiple transformers, inline transformations, `PassThroughTransformer` and chaining transformers with `Then(...)` / `ChainTransformer`
+- [Pipeline Composition](../guides/pipeline-composition.md) — chaining multiple transformers, inline transformations, [`PassThroughTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) and chaining transformers with `Then(...)` / [`ChainTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html)
 - [Custom Parsers & Converters](../guides/custom-parsers.md) — when your transformation logic involves library-specific extension points
 - [Transformer reference](../reference/transformer.md) — formal API reference
