@@ -25,9 +25,9 @@ Supports headers, separator lines, field delimiters, custom value parsing, blank
 
 ## When to use something else
 
-- For CSV / TSV / other delimited formats, use a CSV library (a `Wolfgang.Etl.Csv` package is planned)
+- For CSV / TSV / other delimited formats, use [`Wolfgang.Etl.Csv`](https://github.com/Chris-Wolfgang/ETL-Csv)
 - For truly free-form text, use a regex-based parser or a dedicated parser library
-- For binary fixed-record formats, use a binary serializer — this library works at the character level
+- For binary fixed-record formats (packed integers, raw bytes at fixed offsets), use `FixedWidthBinaryExtractor<TRecord>` / `FixedWidthBinaryLoader<TRecord>` with `[FixedWidthBinaryField]` — they ship in this same package; `FixedWidthExtractor` / `FixedWidthLoader` work at the character level
 
 ## Quick example
 

@@ -25,7 +25,7 @@ Records can be bound via hand-written SQL, parameterized SQL, or auto-generated 
 
 ## When to use something else
 
-- For bulk insert of millions of rows, use the database's native bulk-load API (e.g. `SqlBulkCopy` for SQL Server) rather than row-by-row `INSERT`. A future `Wolfgang.Etl.SqlBulkCopy` library will target this case.
+- For bulk insert of millions of rows, use the database's native bulk-load API (e.g. `SqlBulkCopy` for SQL Server) rather than row-by-row `INSERT`. For SQL Server, [`Wolfgang.Etl.SqlBulkCopy`](https://github.com/Chris-Wolfgang/ETL-SqlBulkCopy) provides `SqlBulkCopyLoader<TRecord>` for exactly this case.
 - For schema migrations, use a migration tool (EF Core migrations, Flyway, DbUp) — this library is for data movement, not schema evolution.
 
 ## Quick example

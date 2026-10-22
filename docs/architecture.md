@@ -50,8 +50,7 @@ Converts items from one type to another. Receives `IAsyncEnumerable<TSource>` an
 
 In practice, transformers tend to fall at one of two extremes: very simple (e.g. `PassThroughTransformer<T>` or `SelectTransformer<TSource, TDestination>`) or very complex business-logic-heavy mappings — there is rarely much in the middle. Because a transformer takes `IAsyncEnumerable<TSource>` in and yields `IAsyncEnumerable<TDestination>` out, you can fully unit-test it in isolation, without connecting it to a real extractor or loader. A `TestExtractor<T>` or a hand-rolled `IAsyncEnumerable<T>` source is enough.
 
-!!! note "PassThroughTransformer<T> and SelectTransformer<TSource, TDestination> are planned classes"
-    Both will live in `Wolfgang.Etl.Transformers`. `PassThroughTransformer` is tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1); `SelectTransformer` is in [Chris-Wolfgang/ETL-Transformers#8](https://github.com/Chris-Wolfgang/ETL-Transformers/pull/8) (open PR).
+Both ship in the `Wolfgang.Etl.Transformers` package, together with filtering, de-duplication, batching and composition transformers — see [ETL-Transformers](https://github.com/Chris-Wolfgang/ETL-Transformers).
 
 ### LoaderBase&lt;TDestination, TProgress&gt;
 
