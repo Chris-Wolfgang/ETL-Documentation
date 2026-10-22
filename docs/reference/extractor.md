@@ -173,21 +173,31 @@ Provides an abstract base class that implements [`IExtractAsync`](#iextractasync
 
 | Constructor | Description |
 |-------------|-------------|
-| `ExtractorBase()` | Initializes a new instance of the class. |
+| `ExtractorBase(ExtractorOptions? options = null)` | *(protected)* Initializes the stage from an [`ExtractorOptions`](#extractoroptions) record. `null` or omitted applies the defaults; out-of-range values throw `ArgumentOutOfRangeException` here. |
+| `ExtractorBase()` | *(protected, hidden from IntelliSense)* Kept for binary compatibility with assemblies compiled before the options constructor existed; same as passing `null`. |
 
 ### Properties
 
 | Property | Description |
 |----------|-------------|
-| `CurrentItemCount` | The current number of items that have been extracted. |
-| `MaximumItemCount` | The maximum number of items to extract before exiting and reporting complete. |
-| `ReportingInterval` | The number of milliseconds between progress reports. |
-| `SkipItemCount` | The number of items to skip before returning items. |
+| `CurrentItemCount` | *(get)* The number of items extracted so far in the current run. |
+| `CurrentSkippedItemCount` | *(get)* The number of items skipped so far in the current run (`SkipItemCount`, or items a worker chose to skip). |
+| `CurrentErrorItemCount` | *(get)* The number of items that failed and were discarded by the error policy. |
+| `MaximumItemCount` | The maximum number of items to process before stopping. Default `int.MaxValue`. |
+| `SkipItemCount` | The number of items to skip before processing. Default `0`. |
+| `ReportingInterval` | The number of milliseconds between progress reports. Default `1000`. |
+| `ErrorPolicy` | *(init)* `Func<ItemErrorContext, ItemErrorAction>` deciding what happens when an item fails: `ItemErrorAction.Abort` (default) or `ItemErrorAction.Skip`. Ready-made policies are in `Wolfgang.Etl.ErrorPolicies`. |
+| `WorkerResilience` | *(init)* A wrapper around each worker invocation, for example a retry policy. A retry re-runs the whole worker. |
+| `StartedAt` | *(protected get)* The UTC time the first item was processed, or `null` before that. |
+| `Elapsed` | *(protected get)* Wall-clock time since the first item was processed; use it when building a `Report`. |
+
+!!! note "Configure the limits through the options record"
+    `MaximumItemCount`, `SkipItemCount` and `ReportingInterval` still have public setters, but the setters are `[Obsolete]` and will be removed (ADR-0009): pass the values in the [`ExtractorOptions`](#extractoroptions) record (or the library's own options record that derives from it, such as `JsonLineExtractorOptions`, `CsvExtractorOptions<T>`) when the stage is constructed. A value assigned after a run has started is not honoured.
 
 
 #### CurrentItemCount
 
-The current number of items that have been extracted. This property is updated as items are extracted and can be used to report progress.
+Read-only. The current number of items that have been extracted. This property is updated as items are extracted and can be used to report progress.
 
 ##### Property Value
 
@@ -196,10 +206,6 @@ The current number of items that have been extracted. This property is updated a
 ##### Default Value
 
 `0`.
-
-##### Exceptions
-
-[`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 0.
 
 **Introduced in:** 0.4.0
 
@@ -220,7 +226,7 @@ The maximum number of items to be extracted before exiting and reporting complet
 
 ##### Exceptions
 
-[`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 0.
+[`ArgumentOutOfRangeException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentoutofrangeexception) — thrown when the assigned value is less than 1.
 
 **Introduced in:** 0.4.0
 
@@ -267,12 +273,19 @@ The number of items to skip before returning items. This property can be used to
 
 | Method | Description |
 |--------|-------------|
-| `CreateProgressReport()` | *(abstract)* Creates a progress report object of type `TProgress` to be used for reporting progress. |
-| `ExtractAsync()` | Extracts data from the source asynchronously. |
-| `ExtractAsync(CancellationToken cancellationToken)` | Extracts data asynchronously with the ability to cancel. |
-| `ExtractAsync(IProgress<TProgress> progress)` | Extracts data asynchronously reporting progress. |
-| `ExtractAsync(IProgress<TProgress> progress, CancellationToken cancellationToken)` | Extracts data asynchronously reporting progress with the ability to cancel. |
-| `ExtractWorkerAsync(CancellationToken token)` | *(abstract)* The worker method that performs the actual extraction of data asynchronously. Implemented by derived classes to provide the specific extraction logic. |
+| `ExtractAsync()` | Runs the stage. *(virtual)* |
+| `ExtractAsync(CancellationToken token)` | Runs the stage with cancellation. *(virtual)* |
+| `ExtractAsync(IProgress<TProgress> progress)` | Runs the stage reporting progress. *(virtual)* |
+| `ExtractAsync(IProgress<TProgress> progress, CancellationToken token)` | Runs the stage reporting progress, with cancellation. *(virtual)* |
+| `ExtractWorkerAsync(CancellationToken token)` | *(protected abstract)* The worker that does the actual work; returns `IAsyncEnumerable<TSource>`. |
+| `CreateProgressReport()` | *(protected abstract)* Creates the `TProgress` report; called on the progress timer's thread. |
+| `IncrementCurrentItemCount()` / `IncrementCurrentItemCount(int count)` | *(protected)* Thread-safe increment of `CurrentItemCount`; call once per item extracted. |
+| `IncrementCurrentSkippedItemCount()` / `IncrementCurrentSkippedItemCount(int count)` | *(protected)* Thread-safe increment of `CurrentSkippedItemCount`. |
+| `HandleItemError(ItemErrorContext context)` | *(protected)* Applies the error policy to a failed item (calls `OnItemError`, counts skipped failures) and returns the `ItemErrorAction`. |
+| `OnItemError(ItemErrorContext context)` | *(protected virtual)* Decides what to do with a failed item; the default delegates to `ErrorPolicy`. |
+| `WrapWorkerExecution(Func<CancellationToken, IAsyncEnumerable<TSource>> workerFactory, CancellationToken token)` | *(protected virtual)* Resilience seam around every worker invocation; the default applies `WorkerResilience`. |
+| `CreateProgressTimer(IProgress<TProgress> progress)` | *(protected virtual)* Creates the timer that drives progress callbacks. Tests no longer need to override it (see [TestKit](testkit.md#progress-timing-in-tests)). |
+| `Dispose()` / `DisposeAsync()` / `Dispose(bool disposing)` | Releases resources. The base implementation is a no-op; override `Dispose(bool)` / `DisposeAsync()` when your stage owns resources. A disposed stage throws `ObjectDisposedException` when run. |
 
 
 #### ExtractAsync()
@@ -337,3 +350,22 @@ Extracts data from the source asynchronously with both progress reporting and ca
 [`ArgumentNullException`](https://learn.microsoft.com/en-us/dotnet/api/system.argumentnullexception) — thrown when the `progress` parameter is null.
 
 **Introduced in:** 0.4.0
+
+
+## ExtractorBase\<TSource\>
+
+A convenience subclass of `ExtractorBase<TSource, TProgress>` with `TProgress` fixed to the built-in `Report` type and a default `CreateProgressReport()`, so a derived class only implements `ExtractWorkerAsync`. Use it when you do not need a custom progress type; override `CreateProgressReport()` to enrich the report (for example to set `TotalItemCount`). It has the same two constructors as the full base class.
+
+
+## ExtractorOptions
+
+A `record` holding the construction-time configuration shared by every extractor: `MaximumItemCount` (default `int.MaxValue`, must be at least 1), `SkipItemCount` (default `0`, must be at least 0), `ReportingInterval` (default `1000` milliseconds, must be at least 1) and `ErrorPolicy`. All are `init`-only. Libraries derive their own options records from it, so the same properties appear on, for example, `JsonLineExtractorOptions`, `CsvExtractorOptions<T>`.
+
+```csharp
+var options = new ExtractorOptions
+{
+    SkipItemCount = 1,             // ignore the first item
+    MaximumItemCount = 10_000,
+    ReportingInterval = 500,
+};
+```
