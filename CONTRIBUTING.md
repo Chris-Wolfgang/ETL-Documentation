@@ -34,7 +34,13 @@ Bugs in the libraries themselves belong in the library's own repository (for exa
 
    Then open <http://localhost:8000>.
 
-4. Create a branch for your change, make it, and open a pull request against `main`.
+4. Enable the secret-scanning pre-commit hook (needs the [gitleaks](https://github.com/gitleaks/gitleaks#installing) CLI on PATH; without it the hook warns and lets the commit through):
+
+   ```bash
+   git config core.hooksPath .githooks
+   ```
+
+5. Create a branch for your change, make it, and open a pull request against `main`.
 
 ---
 
