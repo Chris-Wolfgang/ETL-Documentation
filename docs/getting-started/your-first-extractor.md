@@ -10,14 +10,14 @@ Your source project needs:
 <PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
 ```
 
-Plus whatever libraries your extractor needs to read its format (e.g. `System.Text.Json` for JSON).
+Plus whatever libraries your extractor needs to read its format (e.g. `System.Text.Json` for JSON) and, for logging, `Microsoft.Extensions.Logging.Abstractions`.
 
 
 ## Interfaces vs. the Base Class
 
 There are two ways to build an extractor:
 
-1. **Inherit from `ExtractorBase<TSource, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, skip/max item counts, progress timer setup) and leaves you to implement a single `ExtractWorkerAsync` method. This guide focuses on this path.
+1. **Inherit from `ExtractorBase<TSource, TProgress>`** — the recommended path. The base class handles orchestration (progress reporting, cancellation wiring, configuration validation, progress timer setup) and leaves you to implement a single `ExtractWorkerAsync` method. This guide focuses on this path.
 2. **Implement one of the extractor interfaces directly** — for full control. You get to decide exactly how every piece of the extractor behaves, at the cost of implementing everything yourself.
 
 ### The Four Extractor Interfaces
@@ -35,14 +35,16 @@ Implement only the interface your extractor actually needs — an extractor that
 
 ### When to Use the Base Class
 
-Use `ExtractorBase<TSource, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, honors `SkipItemCount` and `MaximumItemCount` consistently, and gives you the timer-injection pattern needed to test progress reporting (see Step 8).
+Use `ExtractorBase<TSource, TProgress>` unless you have a specific reason not to. It implements all four interfaces at once, validates `SkipItemCount`, `MaximumItemCount` and `ReportingInterval`, runs the progress timer, and lets the TestKit contract tests drive progress deterministically (see Step 6).
 
-Hand-implementing the interfaces is valid and supported — for example, if you are wrapping a third-party reader with its own async loop and cannot match the base-class lifecycle — but you are responsible for matching the contract that other extractors implement. The contract test base classes in `TestKit.Xunit` (see Step 8) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
+If you do not need a custom progress type, inherit `ExtractorBase<TSource>` instead: it fixes the progress type to the built-in `Report` and supplies `CreateProgressReport()` for you.
+
+Hand-implementing the interfaces is valid and supported — for example, if you are wrapping a third-party reader with its own async loop and cannot match the base-class lifecycle — but you are responsible for matching the contract that other extractors implement. The contract test base classes in `TestKit.Xunit` (see Step 6) verify behavior consistent with the base class, so deliberate deviations may fail those tests by design.
 
 
 ## Step 1: Define Your Progress Report
 
-Every extractor needs a progress report type. The base class `Report` from Abstractions provides `CurrentItemCount`. Extend it with format-specific information:
+Every extractor needs a progress report type. The base class `Report` from Abstractions provides `CurrentItemCount` (plus timing values). Extend it with format-specific information:
 
 ```csharp
 using Wolfgang.Etl.Abstractions;
@@ -82,75 +84,53 @@ public class JsonLineExtractor<TRecord> : ExtractorBase<TRecord, JsonReport>
     where TRecord : notnull
 {
     private readonly Stream _stream;
-    private readonly JsonSerializerOptions? _options;
+    private readonly JsonSerializerOptions? _serializerOptions;
     private readonly ILogger _logger;
-    private readonly IProgressTimer? _progressTimer;
-    private int _progressTimerWired;
 ```
 
 | Field | Purpose |
 |-------|---------|
 | `_stream` | The data source your extractor reads from |
-| `_options` | Format-specific configuration (optional) |
+| `_serializerOptions` | Format-specific configuration (optional) |
 | `_logger` | Structured logging via `Microsoft.Extensions.Logging` |
-| `_progressTimer` | Nullable timer for test injection (see [TestKit](#step-8-write-tests)) |
-| `_progressTimerWired` | Guard flag (`int`, set atomically via `Interlocked.CompareExchange`) preventing duplicate timer event subscriptions |
 
-The guard is an `int` rather than a `bool` so it can be set atomically with `Interlocked.CompareExchange` in Step 6 — the `CreateProgressTimer` override may be entered from more than one thread if a caller starts multiple progress-reporting operations concurrently.
+The stage-level configuration (`SkipItemCount`, `MaximumItemCount`, `ReportingInterval`, error policy) is not a field of yours: it arrives in an `ExtractorOptions` record that you pass to the base constructor.
 
 
 ## Step 3: Constructors
 
-You need at least two public constructors plus one internal constructor for testing:
+A minimal constructor for the common case, plus one that takes everything:
 
 ```csharp
     // Public constructor (minimal)
     public JsonLineExtractor
     (
         Stream stream,
-        ILogger<JsonLineExtractor<TRecord>> logger
+        ILogger<JsonLineExtractor<TRecord>>? logger = null
     )
+        : this(stream, serializerOptions: null, options: null, logger)
     {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = null;
     }
 
 
 
-    // Public constructor (with options)
+    // Public constructor (full)
     public JsonLineExtractor
     (
         Stream stream,
-        JsonSerializerOptions options,
-        ILogger<JsonLineExtractor<TRecord>> logger
+        JsonSerializerOptions? serializerOptions,
+        ExtractorOptions? options = null,
+        ILogger<JsonLineExtractor<TRecord>>? logger = null
     )
+        : base(options)
     {
         _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-
-
-    // Internal constructor (for timer injection in tests)
-    internal JsonLineExtractor
-    (
-        Stream stream,
-        JsonSerializerOptions options,
-        ILogger logger,
-        IProgressTimer timer
-    )
-    {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _progressTimer = timer ?? throw new ArgumentNullException(nameof(timer));
+        _serializerOptions = serializerOptions;
+        _logger = (ILogger?)logger ?? NullLogger.Instance;
     }
 ```
 
-!!! note
-    The internal constructor accepts `ILogger` (not `ILogger<T>`) so the test project can pass `NullLogger` easily.
+Passing `options` to `base(options)` is what makes `SkipItemCount`, `MaximumItemCount` and `ReportingInterval` configurable. The base constructor validates them and throws `ArgumentOutOfRangeException` for out-of-range values, and `null` means "use the defaults". A real library usually defines its own options record that derives from `ExtractorOptions` (as `Wolfgang.Etl.Json` does with `JsonLineExtractorOptions`) so format settings and stage settings travel together.
 
 
 ## Step 4: Implement ExtractWorkerAsync
@@ -165,10 +145,10 @@ This is the core of your extractor. It is an `async` iterator method that yields
     {
         var skipBudget = SkipItemCount;
 
-        using var reader = new StreamReader(_stream, leaveOpen: true);
+        using var reader = new StreamReader(_stream, Encoding.UTF8, true, 4096, leaveOpen: true);
 
         string? line;
-        while ((line = await reader.ReadLineAsync(token).ConfigureAwait(false)) is not null)
+        while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) is not null)
         {
             token.ThrowIfCancellationRequested();
 
@@ -177,7 +157,7 @@ This is the core of your extractor. It is an `async` iterator method that yields
                 continue;
             }
 
-            var item = JsonSerializer.Deserialize<TRecord>(line, _options);
+            var item = JsonSerializer.Deserialize<TRecord>(line, _serializerOptions);
             if (item is null)
             {
                 continue;
@@ -201,11 +181,13 @@ This is the core of your extractor. It is an `async` iterator method that yields
     }
 ```
 
+The worker uses `ReadLineAsync()` and the five-argument `StreamReader` constructor because they exist on every target framework; see [Multi-TFM Considerations](#multi-tfm-considerations) for the token-accepting overload on .NET 7+.
+
 ### Critical Rules
 
 1. **Call `IncrementCurrentItemCount()` exactly once per yielded item.** Not in helper methods, not conditionally — once, right before or after the `yield return`.
 
-2. **Implement `SkipItemCount` yourself.** The base class does not handle skipping. Use a local `skipBudget` variable.
+2. **Implement `SkipItemCount` yourself.** The base class validates it but does not skip for you. Use a local `skipBudget` variable.
 
 3. **Implement `MaximumItemCount` yourself.** Check `CurrentItemCount >= MaximumItemCount` before yielding and `break` when reached.
 
@@ -227,48 +209,18 @@ Return a new instance of your progress report:
             CurrentItemCount,
             CurrentSkippedItemCount
         );
+}
 ```
 
 This method is called by the base class on a timer interval and passed to the `IProgress<T>` callback.
 
+That completes the extractor. There is no timer plumbing to add: the base class creates the production timer, and in tests TestKit attaches a manual timer to the base class directly (see [TestKit § Progress Timing in Tests](../reference/testkit.md#progress-timing-in-tests)).
 
-## Step 6: Override CreateProgressTimer
-
-```csharp
-    protected override IProgressTimer CreateProgressTimer(IProgress<JsonReport> progress)
-    {
-        if (_progressTimer is not null)
-        {
-            if (Interlocked.CompareExchange(ref _progressTimerWired, 1, 0) == 0)
-            {
-                _progressTimer.Elapsed += () => progress.Report(CreateProgressReport());
-            }
-
-            return _progressTimer;
-        }
-
-        return base.CreateProgressTimer(progress);
-    }
-```
-
-Two things to note about this override:
-
-- **The `Interlocked.CompareExchange` guard prevents duplicate event subscriptions** if `CreateProgressTimer` is called more than once, and does so atomically so it remains correct under concurrent entry. The subscription is wired exactly once regardless of how many threads reach the override.
-- **The fall-through `return base.CreateProgressTimer(progress)` is required.** When no test timer is injected (the production path), the base class default constructs a `SystemProgressTimer` wired to `ReportProgress`, starts it at `ReportingInterval`, and returns it. Omitting the fall-through would leave the production code path without a working timer.
+!!! note "Older guides: CreateProgressTimer and an internal constructor"
+    Earlier versions of this guide added an `IProgressTimer` field, an `int _progressTimerWired` guard, an internal constructor taking the timer, a `CreateProgressTimer` override and `InternalsVisibleTo`, so tests could inject a timer. The TestKit contract no longer uses that seam, so new extractors should leave it out.
 
 
-## Step 7: Expose Internals to the Test Project
-
-Create `Properties/AssemblyInfo.cs`:
-
-```csharp
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("Wolfgang.Etl.Json.Tests.Unit")]
-```
-
-
-## Step 8: Write Tests
+## Step 6: Write Tests
 
 ### Define your test model
 
@@ -310,30 +262,28 @@ public class JsonLineExtractorTests
 
 
 
-    protected override JsonLineExtractor<PersonRecord> CreateSut(int itemCount) =>
+    protected override JsonLineExtractor<PersonRecord> CreateSut
+    (
+        int itemCount,
+        int maximumItemCount,
+        int skipItemCount,
+        int reportingInterval
+    ) =>
         new
         (
             CreateJsonlStream(itemCount),
-            NullLogger<JsonLineExtractor<PersonRecord>>.Instance
+            serializerOptions: null,
+            new ExtractorOptions
+            {
+                MaximumItemCount = maximumItemCount,
+                SkipItemCount = skipItemCount,
+                ReportingInterval = reportingInterval,
+            }
         );
 
 
 
     protected override IReadOnlyList<PersonRecord> CreateExpectedItems() => ExpectedItems;
-
-
-
-    protected override JsonLineExtractor<PersonRecord> CreateSutWithTimer
-    (
-        IProgressTimer timer
-    ) =>
-        new
-        (
-            CreateJsonlStream(ExpectedItems.Count),
-            new JsonSerializerOptions(),
-            NullLogger<JsonLineExtractor<PersonRecord>>.Instance,
-            timer
-        );
 
 
 
@@ -348,7 +298,7 @@ public class JsonLineExtractorTests
 }
 ```
 
-This single class, with just three factory methods, gives you 20+ tests that validate your extractor against the full `ExtractorBase` contract.
+This single class, with just two factory methods, gives you 43 tests that validate your extractor against the full `ExtractorBase` contract. Pass the three configuration values straight through without validating them: some contract tests pass out-of-range values on purpose and expect the constructor to throw.
 
 **Why this matters beyond "it saves writing tests."** Inheriting the contract test base class verifies that your extractor behaves the same as every other extractor built on `ExtractorBase`. Two extractors with the same `TSource` are interchangeable not just in signature but in *behavior* — `CurrentItemCount` increments at the same moment, `SkipItemCount` and `MaximumItemCount` are enforced at the same boundaries, cancellation stops the pull at the same point, and so on.
 
@@ -369,11 +319,7 @@ public async Task ExtractAsync_when_blank_lines_present_skips_them()
     var content = $"{line1}\n\n  \n{line2}\n";
     var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-    var sut = new JsonLineExtractor<PersonRecord>
-    (
-        stream,
-        NullLogger<JsonLineExtractor<PersonRecord>>.Instance
-    );
+    var sut = new JsonLineExtractor<PersonRecord>(stream);
 
     var results = new List<PersonRecord>();
     await foreach (var item in sut.ExtractAsync())
@@ -398,16 +344,22 @@ await foreach (var person in extractor.ExtractAsync(cancellationToken))
     Console.WriteLine(person.Name);
 }
 
-// With skip and maximum
-extractor.SkipItemCount = 100;
-extractor.MaximumItemCount = 50;
+// With skip and maximum: configure them when the extractor is constructed
+using var pagedStream = File.OpenRead("data.jsonl");
+var paged = new JsonLineExtractor<Person>
+(
+    pagedStream,
+    serializerOptions: null,
+    new ExtractorOptions { SkipItemCount = 100, MaximumItemCount = 50 },
+    logger
+);
 
 // With progress reporting
 var progress = new Progress<JsonReport>(report =>
     Console.WriteLine($"Extracted {report.CurrentItemCount} items")
 );
 
-await foreach (var person in extractor.ExtractAsync(progress, cancellationToken))
+await foreach (var person in paged.ExtractAsync(progress, cancellationToken))
 {
     // ...
 }
@@ -431,17 +383,15 @@ On the older targets, call `token.ThrowIfCancellationRequested()` inside the loo
 
 ## Checklist
 
-- [ ] Inherit `ExtractorBase<TRecord, TProgress>` with `where TRecord : notnull`
+- [ ] Inherit `ExtractorBase<TRecord, TProgress>` (or `ExtractorBase<TRecord>`) with `where TRecord : notnull`
+- [ ] Accept an `ExtractorOptions?` (or a record derived from it) and pass it to `base(options)`
 - [ ] Implement `ExtractWorkerAsync` with `[EnumeratorCancellation]` on the token
 - [ ] Implement `CreateProgressReport()`
 - [ ] Call `IncrementCurrentItemCount()` exactly once per yielded item
 - [ ] Implement `SkipItemCount` logic in your worker method
 - [ ] Implement `MaximumItemCount` logic in your worker method
 - [ ] Respect `CancellationToken` (pass to async calls, call `ThrowIfCancellationRequested`)
-- [ ] Add `_progressTimer` field, `_progressTimerWired` flag, and internal constructor
-- [ ] Override `CreateProgressTimer` with duplicate subscription guard
-- [ ] Add `InternalsVisibleTo` in `Properties/AssemblyInfo.cs`
-- [ ] Test class inherits `ExtractorBaseContractTests<TSut, TItem, TProgress>`
+- [ ] Test class inherits `ExtractorBaseContractTests<TSut, TItem, TProgress>` and implements the four-argument `CreateSut`
 - [ ] `CreateExpectedItems()` returns at least 5 items
 - [ ] Items use `record` types for value equality
 - [ ] Add domain-specific tests for format-specific behavior
