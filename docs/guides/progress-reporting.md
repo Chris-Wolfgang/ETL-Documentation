@@ -121,7 +121,7 @@ Each stage's progress type can differ — the extractor reports `FixedWidthRepor
 
 ## Custom progress types
 
-To add domain-specific information to progress reports, create a custom report type and override `CreateProgressReport`:
+To add domain-specific information to progress reports, create a custom report type, use it as the `TProgress` type argument of the base class, and override `CreateProgressReport`. Library classes such as `FixedWidthExtractor<TRecord>` fix their own report type (`FixedWidthReport`), so a custom report belongs on your own `ExtractorBase<TSource, TProgress>` (or transformer / loader) subclass:
 
 ```csharp
 public record ImportProgress : Report
@@ -147,22 +147,56 @@ public record ImportProgress : Report
     public string CurrentFileName { get; }
 }
 
-public class MyExtractor : FixedWidthExtractor<CustomerRecord, ImportProgress>
+public class CustomerFileExtractor : ExtractorBase<CustomerRecord, ImportProgress>
 {
-    public string CurrentFileName { get; set; } = string.Empty;
+    private readonly TextReader _reader;
+    private long _lineNumber;
 
 
 
-    public MyExtractor(TextReader reader) : base(reader) { }
+    public CustomerFileExtractor(TextReader reader, string fileName)
+    {
+        _reader = reader ?? throw new ArgumentNullException(nameof(reader));
+        CurrentFileName = fileName;
+    }
 
 
 
+    public string CurrentFileName { get; }
+
+
+
+    protected override async IAsyncEnumerable<CustomerRecord> ExtractWorkerAsync
+    (
+        [EnumeratorCancellation] CancellationToken token
+    )
+    {
+        string? line;
+        while ((line = await _reader.ReadLineAsync().ConfigureAwait(false)) is not null)
+        {
+            token.ThrowIfCancellationRequested();
+            Interlocked.Increment(ref _lineNumber);
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                IncrementCurrentSkippedItemCount();
+                continue;
+            }
+
+            IncrementCurrentItemCount();
+            yield return CustomerRecord.Parse(line);
+        }
+    }
+
+
+
+    // Called on the progress timer's thread, so read the counter atomically
     protected override ImportProgress CreateProgressReport() =>
         new
         (
             CurrentItemCount,
             CurrentSkippedItemCount,
-            CurrentLineNumber,
+            Interlocked.Read(ref _lineNumber),
             CurrentFileName
         );
 }

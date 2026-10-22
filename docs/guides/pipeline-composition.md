@@ -428,7 +428,7 @@ var extractor = new JsonLineExtractor<SourceEmployee>(sourceStream, extractorLog
 var transformer = new EmployeeTransformer();
 
 using var destStream = File.Create("employees.dat");
-var loader = new FixedWidthLoader<OutputEmployee, FixedWidthReport>(destStream, loaderLogger);
+var loader = new FixedWidthLoader<OutputEmployee>(destStream, logger: loaderLogger);
 loader.WriteHeader = true;
 loader.FieldSeparator = '-';
 

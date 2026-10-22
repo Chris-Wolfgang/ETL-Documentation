@@ -183,7 +183,8 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
         CancellationToken token
     )
     {
-        using var writer = new StreamWriter(_stream, leaveOpen: true);
+        // Explicit encoding and buffer size: the (Stream, leaveOpen:) shorthand is .NET Core 3.0+ only
+        using var writer = new StreamWriter(_stream, new UTF8Encoding(false), 4096, leaveOpen: true);
 
         await foreach (var item in items.WithCancellation(token).ConfigureAwait(false))
         {
@@ -201,12 +202,12 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
             }
 
             var json = JsonSerializer.Serialize(item, _options);
-            await writer.WriteLineAsync(json.AsMemory(), token).ConfigureAwait(false);
+            await writer.WriteLineAsync(json).ConfigureAwait(false);
 
             IncrementCurrentItemCount();
         }
 
-        await writer.FlushAsync(token).ConfigureAwait(false);
+        await writer.FlushAsync().ConfigureAwait(false);
     }
 ```
 
@@ -316,6 +317,19 @@ public class JsonLineLoaderTests
 
 !!! note
     `CreateSut` for loaders creates a fresh `MemoryStream` each time. The `itemCount` parameter tells you how many items will be loaded — useful for loaders that pre-allocate. For a JSONL loader, you can ignore it.
+
+
+## Multi-TFM Considerations
+
+The `LoadWorkerAsync` above uses the four-argument `StreamWriter` constructor, `WriteLineAsync(string)` and `FlushAsync()`, which exist on every target framework, and observes cancellation through `token.ThrowIfCancellationRequested()` on each item. The token-accepting overloads are newer: `TextWriter.WriteLineAsync(ReadOnlyMemory<char>, CancellationToken)` needs netstandard2.1 / .NET Core 3.0+, and `StreamWriter.FlushAsync(CancellationToken)` needs .NET 8+. To use them where available, guard each call with the matching `_OR_GREATER` symbol:
+
+```csharp
+#if NET8_0_OR_GREATER
+        await writer.FlushAsync(token).ConfigureAwait(false);
+#else
+        await writer.FlushAsync().ConfigureAwait(false);
+#endif
+```
 
 
 ## Checklist
