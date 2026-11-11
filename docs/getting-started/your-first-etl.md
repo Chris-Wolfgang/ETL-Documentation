@@ -10,7 +10,7 @@ By the end you will have a runnable program that demonstrates the framework's th
 - A supported [.NET SDK](https://dotnet.microsoft.com/download). The framework's `Wolfgang.Etl.Abstractions` package runs on .NET Framework 4.6.2+, .NET Core 3.1, and .NET 5+ (or any runtime supporting `netstandard2.0`/`netstandard2.1`). Individual library packages may have a narrower matrix — see [Installation](installation.md) and the relevant [Libraries](../libraries/index.md) page.
 - A SQL Server instance with an `Employees` table (any provider works — `Microsoft.Data.SqlClient` is the default in this example)
 
-Two NuGet packages do all the heavy lifting:
+Three NuGet packages do all the heavy lifting — the two framework libraries and the SQL Server provider:
 
 ```bash
 dotnet add package Wolfgang.Etl.DbClient
@@ -65,8 +65,8 @@ public class EmployeePassThrough : TransformerBase<Employee, Employee, Report>
 }
 ```
 
-!!! note "PassThroughTransformer&lt;T&gt; is a planned class"
-    Once `Wolfgang.Etl.Transformers` ships, this will collapse to a single line: `var transformer = new PassThroughTransformer<Employee>();`. Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1).
+!!! tip "Use the built-in PassThroughTransformer&lt;T&gt; in real code"
+    The class above is written out so you can see what a transformer does. `Wolfgang.Etl.Transformers` ships the same thing ready-made — add the package (`dotnet add package Wolfgang.Etl.Transformers`) and the whole step becomes one line: `var transformer = new PassThroughTransformer<Employee>();`.
 
 
 ## Step 3: Wire and run the pipeline
@@ -80,7 +80,7 @@ await using var connection = new SqlConnection(connectionString);
 await connection.OpenAsync(cts.Token);
 
 // Extractor: SQL Server -> Employee
-var extractor = new DbExtractor<Employee, DbReport>
+var extractor = new DbExtractor<Employee>
 (
     connection,
     "SELECT id, first_name, last_name, email, hire_date FROM employees",
@@ -127,7 +127,7 @@ Add the CSV package alongside the JSON one:
 dotnet add package Wolfgang.Etl.Csv
 ```
 
-Then type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change.
+Then type the loader variable as `ILoadWithCancellationAsync<Employee>` and assign whichever concrete instance matches the requested format. The rest of the pipeline does not change. (`CsvLoader<T>` writes through a `StreamWriter`, while the JSON loaders take the `Stream` itself; each loader also takes its own typed `ILogger<...>`.)
 
 ```csharp
 // args[0] is "json" or "csv"
@@ -135,11 +135,12 @@ var format = args.Length > 0 ? args[0] : "json";
 var path = $"employees.{format}";
 
 await using var fileStream = File.Create(path);
+await using var fileWriter = new StreamWriter(fileStream);
 
 ILoadWithCancellationAsync<Employee> loader = format switch
 {
-    "json" => new JsonSingleStreamLoader<Employee>(fileStream, loaderLogger),
-    "csv"  => new CsvLoader<Employee>(fileStream, loaderLogger),
+    "json" => new JsonSingleStreamLoader<Employee>(fileStream, jsonLoaderLogger),
+    "csv"  => new CsvLoader<Employee>(fileWriter, csvLoaderLogger),
     _      => throw new ArgumentException($"Unknown format: {format}")
 };
 

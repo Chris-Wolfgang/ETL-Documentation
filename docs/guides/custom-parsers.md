@@ -29,7 +29,7 @@ For recipes (enum mapping, currency handling, per-field date formats, custom hea
 
 ## JSON customization
 
-The JSON library extractors and loaders accept an optional serializer-options object that controls property naming, null handling, indentation, custom converters, and so on. Pass it to the constructor or assign it via the `SerializerOptions` property.
+The JSON library extractors and loaders accept an optional serializer-options object that controls property naming, null handling, indentation, custom converters, and so on. Pass a `JsonSerializerOptions` to the constructor, or set `SerializerOptions` on the matching `*Options` record (for example `JsonLineLoaderOptions`) and pass that record to the constructor. The extractors and loaders themselves have no settable `SerializerOptions` property.
 
 Quick example — camel-case JSON keys with indentation when writing:
 
@@ -40,10 +40,15 @@ var options = new JsonSerializerOptions
     WriteIndented = true,
 };
 
-var loader = new JsonLineLoader<MyRecord>(stream, logger)
-{
-    SerializerOptions = options,
-};
+var loader = new JsonLineLoader<MyRecord>(stream, options, logger);
+
+// or, through the options record
+var loader = new JsonLineLoader<MyRecord>
+(
+    stream,
+    new JsonLineLoaderOptions { SerializerOptions = options },
+    logger
+);
 ```
 
 For the full set of customizations (custom converters, enum string handling, source-generated serialization, etc.), see the [ETL-Json README](https://github.com/Chris-Wolfgang/ETL-Json#readme) and the standard `System.Text.Json` documentation.
