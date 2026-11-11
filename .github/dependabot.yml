@@ -11,9 +11,26 @@ updates:
         patterns:
           - "*"
 
+  # Keep the hash-pinned pip tooling (zizmor) under .github/requirements up to date.
+  # The "/" pip entry above does not reach this directory, so without this the
+  # --require-hashes pin never moves. Same entry as repo-template.
+  - package-ecosystem: "pip"
+    directory: "/.github/requirements"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      pip-tooling:
+        patterns:
+          - "*"
+
   # Keep the GitHub Actions used by the workflows up to date.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" covers .github/workflows; composite actions under .github/actions/ are
+    # only scanned when their directories are listed.
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

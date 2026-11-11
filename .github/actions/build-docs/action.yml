@@ -1,0 +1,22 @@
+name: Build documentation
+description: >-
+  Sets up Python, installs the pinned docs toolchain from requirements.txt and runs
+  `mkdocs build --strict`. Shared by pr.yaml (validation) and deploy-docs.yaml (Pages
+  deploy) so the two builds cannot drift apart.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        # A minor version, not '3.x', so a new CPython release cannot change the build unannounced.
+        python-version: '3.12'
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r requirements.txt
+
+    - name: Build documentation
+      shell: bash
+      run: mkdocs build --strict
