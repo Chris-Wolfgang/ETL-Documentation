@@ -26,7 +26,7 @@ No intermediate collections. Memory usage stays constant regardless of dataset s
 
 ## Packages
 
-The framework ships as several focused NuGet packages. See [Installation](getting-started/installation.md) for the full list and install commands, or browse [Libraries](libraries/fixedwidth.md) for what each format-specific package does.
+The framework ships as several focused NuGet packages. See [Installation](getting-started/installation.md) for the full list and install commands, or browse [Libraries](libraries/index.md) for what each format-specific package does.
 
 ## Built-in Capabilities
 
@@ -54,12 +54,10 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 | Loader | 1 | Consumes `IAsyncEnumerable<TDestination>` and writes to the target |
 
 !!! tip "Every ETL has a transformer stage"
-    When no transformation is needed — for example, reading a fixed width file and writing it to a CSV file — use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers`. It pulls each item from the extractor and yields it unchanged, preserving the three-stage shape.
+    When no transformation is needed — for example, reading a fixed width file and writing it to a CSV file — use [`PassThroughTransformer<T>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) from `Wolfgang.Etl.Transformers`. It pulls each item from the extractor and yields it unchanged, preserving the three-stage shape.
 
     Connecting the loader directly to the extractor is an antipattern: it breaks the three-stage shape the rest of the framework is built around, and adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 
-!!! note "PassThroughTransformer<T> is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through `TransformerBase<T, T, TProgress>` subclass whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
 
 ## Quick Links
 
@@ -69,5 +67,5 @@ Every extractor, transformer, and loader built on the base classes gets these fe
 - **[Your First Transformer](getting-started/your-first-transformer.md)** — build a custom transformer from scratch
 - **[Your First Loader](getting-started/your-first-loader.md)** — build a custom loader from scratch
 - **[Architecture](architecture.md)** — base classes, interfaces, and design patterns
-- **[Libraries](libraries/fixedwidth.md)** — FixedWidth, DbClient, XML, JSON reference docs
-- **[Guides](guides/pipeline-composition.md)** — pipeline composition, error handling, progress, performance
+- **[Libraries](libraries/index.md)** — FixedWidth, DbClient, XML, JSON and TestKit overviews
+- **[Guides](guides/index.md)** — pipeline composition, error handling, progress, performance

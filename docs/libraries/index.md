@@ -1,6 +1,6 @@
 # Libraries
 
-Catalog of the libraries and packages shipped with the Wolfgang.Etl framework. Most are format-specific extractor and loader implementations; the TestKit packages are testing infrastructure for verifying components built on the Abstractions.
+Catalog of the libraries and packages shipped with the Wolfgang.Etl framework: format-specific extractor and loader implementations, generic building blocks (transformers, error policies), and the TestKit packages — testing infrastructure for verifying components built on the Abstractions. This section currently has pages for the format libraries and TestKit; the [README](https://github.com/Chris-Wolfgang/ETL-Documentation#libraries-covered) lists every published package.
 
 Each page is a short overview — what the package does, when to use it, and when to pick something else — with links to its source repo for detailed API reference and recipes.
 
@@ -24,7 +24,7 @@ Relational and bulk-import paths.
 
 Tooling for verifying that your custom extractors, transformers, and loaders honor the framework's contract.
 
-- **[TestKit](testkit.md)** — `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit`. Test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), deterministic test helpers (`ManualProgressTimer`, `SynchronousProgress<T>`), and contract test base classes that verify your custom components honor the framework's contract.
+- **[TestKit](testkit.md)** — `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit`. Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` and fault / delay / retry / snapshot variants), deterministic timing helpers (`ManualProgressTimerCore`, `ManualTimeSource`; `ManualProgressTimer` and `SynchronousProgress<T>` live in `TestKit.Xunit`), and contract test base classes that verify your custom components honor the framework's contract.
 
 ## Related
 
