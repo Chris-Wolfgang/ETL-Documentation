@@ -25,4 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Build documentation
-        uses: ./.github/actions/build-docs
+        # GitHub's `$/` self-repository syntax is preferred here, but actionlint
+        # rejects it until rhysd/actionlint#732 ships. Switch to
+        # `$/.github/actions/build-docs` and drop the ignore when it does.
+        uses: ./.github/actions/build-docs  # zizmor: ignore[self-repository]
