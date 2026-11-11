@@ -219,14 +219,22 @@ await loader.LoadAsync
 
 ### With skip and maximum item counts
 
+Skip and maximum counts, like `ReportingInterval`, are construction-time configuration: pass them in the stage's options record.
+
 ```csharp
 // Skip the first 1000 items and extract only the next 500
-extractor.SkipItemCount = 1000;
-extractor.MaximumItemCount = 500;
+var extractor = new JsonLineExtractor<SourcePerson>
+(
+    sourceStream,
+    new JsonLineExtractorOptions { SkipItemCount = 1000, MaximumItemCount = 500 }
+);
 
-// You can also set these on the transformer or loader independently
-transformer.ReportingInterval = 5000;  // Report every 5 seconds
+// Transformers and loaders take the same settings independently, through
+// TransformerOptions / LoaderOptions or a library's own options record,
+// e.g. new JsonLineLoaderOptions { ReportingInterval = 5000 } to report every 5 seconds
 ```
+
+(The `SkipItemCount`, `MaximumItemCount` and `ReportingInterval` properties still have setters, but they are obsolete and will be removed.)
 
 
 ## When You Do Not Need to Transform Data
@@ -237,7 +245,7 @@ Every ETL has a transformer stage. When no transformation is needed — for exam
 - Adding a transformer later (for logging, validation, enrichment, rate limiting, etc.) requires restructuring the pipeline.
 - It is harder for readers of the code to see the ETL pattern.
 
-Instead, use `PassThroughTransformer<T>` from `Wolfgang.Etl.Transformers` — a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
+Instead, use [`PassThroughTransformer<T>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.PassThroughTransformer-1.html) from `Wolfgang.Etl.Transformers` — a pass-through transformer that pulls each item from its source enumerable and yields it unchanged:
 
 ```csharp
 using var sourceStream = File.OpenRead("data.jsonl");
@@ -259,9 +267,6 @@ await loader.LoadAsync
 );
 ```
 
-!!! note "PassThroughTransformer<T> is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#1](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/1). Until it ships, write a small pass-through subclass of `TransformerBase<T, T, TProgress>` whose `TransformWorkerAsync` iterates the input and yields each item after calling `IncrementCurrentItemCount()`.
-
 
 ## Chaining Transformers
 
@@ -270,22 +275,18 @@ Prefer many small, focused transformers over one large transformer:
 1. **Smaller transformers are easier to test.** Each one has a narrow input/output contract and a single responsibility, which keeps unit tests small and focused.
 2. **Smaller transformers are more reusable.** A transformer that validates an `Address`, for example, can be reused in any ETL that produces an `Address` — you just add conversion transformers on either side to adapt from the ERP/CRM/etc. format to `Address` and back. Composing a complex transformation from smaller pieces across projects is much easier than reusing a monolithic transformer.
 
-When several transformers need to be chained together, use `MultistepTransformer` (from `Wolfgang.Etl.Transformers`) rather than nesting `TransformAsync` calls manually. `MultistepTransformer` takes an ordered collection of transformers where:
+When several transformers need to be chained together, compose them with `Then(...)` from `Wolfgang.Etl.Transformers` rather than nesting `TransformAsync` calls manually. Each `Then` call joins two transformers into a [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) (or [`ChainTransformerWithCancellation<...>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformerWithCancellation-3.html) when both sides accept a `CancellationToken`), and the compiler checks that every link lines up:
 
-- The `TSource` of the `MultistepTransformer` matches the input of the first transformer.
-- The output of transformer N matches the input of transformer N+1.
-- The `TDestination` of the `MultistepTransformer` matches the output of the last transformer.
+- The input of the chain is the input of the first transformer.
+- The output of transformer N is the input of transformer N+1.
+- The output of the chain is the output of the last transformer.
 
 ```csharp
-var transformer = new MultistepTransformer<SourcePerson, DestinationContact, TransformerProgressReport>
-(
-    new ITransformAsync<object, object>[]
-    {
-        new CleanDataTransformer(),    // SourcePerson   -> CleanPerson
-        new EnrichTransformer(),       // CleanPerson    -> EnrichedPerson
-        new MapToContactTransformer(), // EnrichedPerson -> DestinationContact
-    }
-);
+using Wolfgang.Etl.Transformers;
+
+var transformer = new CleanDataTransformer()   // SourcePerson   -> CleanPerson
+    .Then(new EnrichTransformer())             // CleanPerson    -> EnrichedPerson
+    .Then(new MapToContactTransformer());      // EnrichedPerson -> DestinationContact
 
 await loader.LoadAsync
 (
@@ -300,8 +301,7 @@ await loader.LoadAsync
 
 This gives you a single transformer object you can hand to the loader, while still keeping each step independently testable, reusable, and composable.
 
-!!! note "MultistepTransformer is a planned class"
-    Tracked by [Chris-Wolfgang/ETL-Transformers#2](https://github.com/Chris-Wolfgang/ETL-Transformers/issues/2). Until it ships, chain transformers by nesting `TransformAsync` calls manually, with the innermost call receiving the extractor's enumerable.
+To spell the types out, construct the chain directly: `new ChainTransformerWithCancellation<SourcePerson, CleanPerson, EnrichedPerson>(new CleanDataTransformer(), new EnrichTransformer())`. The [Transform Chains](../cookbook/transform-chains.md) recipe builds a complete chain from the package's [`SelectTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.SelectTransformer-2.html) and [`WhereTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.WhereTransformer-1.html).
 
 
 ## Interchangeability
@@ -436,7 +436,7 @@ var extractor = new JsonLineExtractor<SourceEmployee>(sourceStream, extractorLog
 var transformer = new EmployeeTransformer();
 
 using var destStream = File.Create("employees.dat");
-var loader = new FixedWidthLoader<OutputEmployee, FixedWidthReport>(destStream, loaderLogger);
+var loader = new FixedWidthLoader<OutputEmployee>(destStream, logger: loaderLogger);
 loader.WriteHeader = true;
 loader.FieldSeparator = '-';
 
@@ -471,28 +471,35 @@ Test the pipeline at two levels: each component in isolation (unit tests), and t
 
 ### Unit testing each component
 
-Each extractor, transformer, and loader should have its own unit-test class that verifies it in isolation from the rest of the pipeline. Use the contract test base classes from `Wolfgang.Etl.TestKit.Xunit` — inheriting from them gives you 20+ test cases verifying that your component honors the contract shared by every component built on the Abstractions base classes.
+Each extractor, transformer, and loader should have its own unit-test class that verifies it in isolation from the rest of the pipeline. For extractors, loaders and same-type (`T` → `T`) transformers, inherit the contract test base classes from `Wolfgang.Etl.TestKit.Xunit` (`ExtractorBaseContractTests`, `LoaderBaseContractTests`, `TransformerBaseContractTests`): two factory methods give you more than 40 test cases verifying that your component honors the contract shared by every component built on the Abstractions base classes — see [Your First Extractor](../getting-started/your-first-extractor.md#inherit-the-contract-test-base-class) for a complete example.
+
+`PersonToContactTransformer` changes the type (`SourcePerson` → `DestinationContact`), which the transformer contract base does not cover, so test it directly. A `TestExtractor<T>` from `Wolfgang.Etl.TestKit` makes a convenient in-memory source:
 
 ```csharp
 public class PersonToContactTransformerTests
-    : TransformerBaseContractTests<PersonToContactTransformer, SourcePerson, Report>
 {
-    protected override PersonToContactTransformer CreateSut(int itemCount)
-        => new();
+    [Fact]
+    public async Task TransformAsync_builds_FullName_from_first_and_last_name()
+    {
+        var source = new TestExtractor<SourcePerson>
+        (
+            new[] { new SourcePerson { first_name = "Alice", last_name = "Smith" } }
+        );
 
-    protected override IReadOnlyList<SourcePerson> CreateExpectedItems()
-        => Enumerable.Range(0, 5)
-            .Select(i => new SourcePerson { first_name = $"F{i}", last_name = $"L{i}" })
-            .ToList();
+        var sut = new PersonToContactTransformer();
 
-    protected override PersonToContactTransformer CreateSutWithTimer(IProgressTimer timer)
-        => new(timer);
+        var results = new List<DestinationContact>();
+        await foreach (var contact in sut.TransformAsync(source.ExtractAsync()))
+        {
+            results.Add(contact);
+        }
+
+        Assert.Equal("Alice Smith", Assert.Single(results).FullName);
+    }
 }
 ```
 
-That's the entire test class. The base class runs every contract assertion against it.
-
-For the full TestKit API — contract test base classes, test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), and the timer injection pattern needed for progress tests — see [TestKit](../reference/testkit.md).
+For the full TestKit API — contract test base classes, test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>` and more), and deterministic progress timing — see [TestKit](../reference/testkit.md).
 
 ### Integration testing the pipeline
 

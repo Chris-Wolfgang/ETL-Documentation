@@ -6,8 +6,8 @@ XML extractor and loader with single-stream and multi-stream modes.
 |---|---|
 | **NuGet** | `Wolfgang.Etl.Xml` |
 | **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.Xml) |
-| **Dependencies** | Wolfgang.Etl.Abstractions, Microsoft.Extensions.Logging.Abstractions |
-| **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Microsoft.Extensions.Logging.Abstractions, System.Diagnostics.DiagnosticSource |
+| **Target Frameworks** | net462, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net10.0 |
 | **Source** | [ETL-Xml](https://github.com/Chris-Wolfgang/ETL-Xml) |
 
 ## What it does
