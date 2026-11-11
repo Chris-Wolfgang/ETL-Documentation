@@ -9,7 +9,7 @@ If you are building a pipeline for the first time, see [Getting Started](../gett
 - **[Extractor](extractor.md)** — the four `IExtract*Async` interfaces (diamond inheritance) and the `ExtractorBase<TSource, TProgress>` abstract class. Constructors, properties, methods, and the `ExtractWorkerAsync` / `CreateProgressReport` extension points.
 - **[Transformer](transformer.md)** — the four `ITransform*Async` interfaces and `TransformerBase<TSource, TDestination, TProgress>`. Same structure as the extractor, with notes on when transformers are application-specific and when generic reuse is possible.
 - **[Loader](loader.md)** — the four `ILoad*Async` interfaces and `LoaderBase<TDestination, TProgress>`.
-- **[TestKit](testkit.md)** — test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), contract test base classes, the `ManualProgressTimer`, and the timer-injection pattern for writing deterministic progress tests.
+- **[TestKit](testkit.md)** — test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`), contract test base classes, the `ManualProgressTimer`, and the timer-injection pattern for writing deterministic progress tests.
 
 ## Related
 

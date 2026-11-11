@@ -1,0 +1,125 @@
+name: OSSF Scorecard
+
+# Baseline item 17: automated security-posture scoring via the OpenSSF Scorecard.
+#
+# Scorecard evaluates the repository against supply-chain / security best practices
+# (branch protection, pinned dependencies, token permissions, dangerous workflow
+# patterns, ...), publishes the score that the README badge shows, and uploads the
+# findings to Code Scanning. Runs weekly, on pushes to main and on branch-protection
+# changes; not per-PR (it scores the repository, not a diff).
+#
+# Two jobs, as in the fleet's fixed template: scorecard.dev rejects publish_results when
+# the job running ossf/scorecard-action contains any `run:` step, so the SARIF filtering
+# lives in a second job.
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '31 6 * * 1'   # Mondays at 06:31 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: scorecard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write          # publish results to the OpenSSF API
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e  # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+
+  upload:
+    name: Filter and upload SARIF
+    needs: analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      security-events: write   # upload the SARIF results
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download SARIF artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: scorecard-sarif
+
+      # Drop Scorecard findings that are known won't-fix for this repository BEFORE the
+      # SARIF reaches Code Scanning. Filtering here (rather than dismissing alerts one by
+      # one) is durable: Scorecard emits a fresh SARIF every run. The published
+      # scorecard.dev score (README badge) is unaffected.
+      #
+      # Suppressed rules:
+      #   CodeReviewID         - solo-maintainer repository; requiring a second approver
+      #                          would force admin-bypass on every PR.
+      #   CIIBestPracticesID   - bestpractices.dev badge is an external registration.
+      #   FuzzingID, SASTID    - this is a documentation-only repository (Markdown plus
+      #                          mkdocs config): there is no code to fuzz or to analyse
+      #                          with CodeQL. repo-template suppresses the same two rules
+      #                          for itself for the same reason.
+      - name: Filter suppressed findings from SARIF
+        shell: bash
+        env:
+          SUPPRESSED_RULES: 'CodeReviewID CIIBestPracticesID FuzzingID SASTID'
+        run: |
+          set -euo pipefail
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "::error::jq not available on the runner; cannot filter SARIF."
+            exit 1
+          fi
+          # Word-split the rule list intentionally - one rule per line for jq.
+          # shellcheck disable=SC2086
+          rules_json=$(printf '%s\n' $SUPPRESSED_RULES | jq -R . | jq -s .)
+          echo "Suppressed rules: $SUPPRESSED_RULES"
+          jq \
+            --argjson suppressed "$rules_json" \
+            '
+              .runs |= map(
+                .results |= map(select(
+                  (.ruleId // "") as $r
+                  | ($suppressed | index($r)) == null
+                ))
+              )
+            ' results.sarif > results.filtered.sarif
+          before=$(jq '[.runs[].results[]] | length' results.sarif)
+          after=$(jq '[.runs[].results[]] | length' results.filtered.sarif)
+          echo "Scorecard SARIF results: $before -> $after after suppression"
+          mv results.filtered.sarif results.sarif
+
+      - name: Upload SARIF to Code Scanning
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        env:
+          # Keep the analysis key the single-job layout would have used, so alerts stay
+          # under one key if this workflow is ever reorganised (fleet convention).
+          CODEQL_ACTION_ANALYSIS_KEY: .github/workflows/scorecard.yaml:analysis
+        with:
+          sarif_file: results.sarif

@@ -18,12 +18,12 @@ This holds true as long as you do not materialize the `IAsyncEnumerable` into a 
 
 ### Use the Stream constructor when available
 
-When a library offers both a `Stream` constructor and a `TextReader` constructor, prefer the `Stream` one — libraries typically configure a larger read buffer internally than the `StreamReader` default (often 1 KB). If you need to use a `TextReader` constructor, wrap your stream in a `StreamReader` with an explicitly larger buffer:
+When a library offers both a `Stream` constructor and a `TextReader` constructor, prefer the `Stream` one — libraries typically configure a larger read buffer internally than the `StreamReader` default buffer. If you need to use a `TextReader` constructor, wrap your stream in a `StreamReader` with an explicitly larger buffer:
 
 ```csharp
 // Preferred: use the Stream constructor
 using var stream = File.OpenRead("data.txt");
-var extractor = new FixedWidthExtractor<MyRecord, FixedWidthReport>(stream, logger);
+var extractor = new FixedWidthExtractor<MyRecord>(stream, logger: logger);
 
 // Alternative: manual large buffer with TextReader constructor
 using var stream = File.OpenRead("data.txt");
@@ -34,19 +34,22 @@ using var reader = new StreamReader
     detectEncodingFromByteOrderMarks: true,
     bufferSize: 65536
 );
-var extractor = new FixedWidthExtractor<MyRecord, FixedWidthReport>(reader, logger);
+var extractor = new FixedWidthExtractor<MyRecord>(reader, logger);
 ```
 
 ### Use SkipItemCount and MaximumItemCount instead of LINQ
 
-The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside `ExtractWorkerAsync` / `LoadWorkerAsync`, where they can short-circuit the read loop and avoid reading or processing items that will be discarded.
+The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside `ExtractWorkerAsync` / `LoadWorkerAsync`, where they can short-circuit the read loop and avoid reading or processing items that will be discarded. Set them through the stage's options record when you construct it.
 
 LINQ's `Skip()` and `Take()` operators, by contrast, still enumerate through the skipped items — they just discard them after extraction:
 
 ```csharp
 // Good: skips at the source level — lines are read but not parsed
-extractor.SkipItemCount = 1000;
-extractor.MaximumItemCount = 500;
+var extractor = new JsonLineExtractor<MyRecord>
+(
+    stream,
+    new JsonLineExtractorOptions { SkipItemCount = 1000, MaximumItemCount = 500 }
+);
 
 // Bad: parses all 1000 skipped records before discarding them
 var items = extractor.ExtractAsync(cancellationToken)
@@ -116,9 +119,14 @@ await loader.LoadAsync
     cancellationToken
 );
 
-// Interactive: report every 500 ms
-extractor.ReportingInterval = 500;
-await foreach (var record in extractor.ExtractAsync(progress, cancellationToken))
+// Interactive: report every 500 ms (set at construction)
+var interactive = new JsonLineExtractor<MyRecord>
+(
+    stream,
+    new JsonLineExtractorOptions { ReportingInterval = 500 }
+);
+
+await foreach (var record in interactive.ExtractAsync(progress, cancellationToken))
 {
     Process(record);
 }
@@ -161,7 +169,7 @@ Each library has its own performance characteristics and optimizations — span-
 - [ETL-FixedWidth README](https://github.com/Chris-Wolfgang/ETL-FixedWidth#readme)
 - [ETL-Json README](https://github.com/Chris-Wolfgang/ETL-Json#readme)
 - [ETL-Xml README](https://github.com/Chris-Wolfgang/ETL-Xml#readme)
-- [ETL-DbClient README](https://github.com/Chris-Wolfgang/ETL-DbClient#readme)
+- [Etl-DbClient README](https://github.com/Chris-Wolfgang/Etl-DbClient#readme)
 
 If you are processing high volumes and performance is critical, target `net8.0` or later — most libraries have span-based fast paths on newer TFMs that fall back to string-based implementations on netstandard2.0.
 

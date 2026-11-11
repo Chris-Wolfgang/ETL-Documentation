@@ -55,6 +55,56 @@ var extractor = new JsonLineExtractor<Person>(deflate, logger);
 ```
 
 
+## Other Formats
+
+The examples above use JSON Lines, but nothing about them is JSON-specific. Every extractor and loader that takes a `Stream` works the same way.
+
+### JSON array (single document)
+
+```csharp
+using var fileStream = File.OpenRead("people.json.gz");
+using var gzip = new GZipStream(fileStream, CompressionMode.Decompress);
+
+var extractor = new JsonSingleStreamExtractor<Person>(gzip);
+```
+
+### XML (single document with many records)
+
+```csharp
+using var fileStream = File.OpenRead("orders.xml.gz");
+using var gzip = new GZipStream(fileStream, CompressionMode.Decompress);
+
+var extractor = new XmlSingleStreamExtractor<Order>(gzip);
+```
+
+### XML (one compressed file per record)
+
+`XmlMultiStreamExtractor<T>` reads one record from each stream in a sequence and disposes each stream after reading it, so the files can be opened lazily as the extractor reaches them:
+
+```csharp
+var streams = Directory
+    .EnumerateFiles("inbox", "*.xml.gz")
+    .Select(path => (Stream)new GZipStream(File.OpenRead(path), CompressionMode.Decompress));
+
+var extractor = new XmlMultiStreamExtractor<Order>(streams);
+```
+
+### Fixed-width (including EBCDIC mainframe exports)
+
+Mainframe-to-cloud migrations commonly ship fixed-width files that are both compressed and EBCDIC-encoded. Decompress with the wrapper stream and decode with the code page; the two concerns are independent:
+
+```csharp
+// .NET Core / .NET 5+ only resolve EBCDIC code pages once this provider is registered
+// (.NET Framework has them built in)
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+using var fileStream = File.OpenRead("accounts.dat.gz");
+using var gzip = new GZipStream(fileStream, CompressionMode.Decompress);
+
+var extractor = new FixedWidthExtractor<AccountRecord>(gzip, Encoding.GetEncoding("IBM037"));
+```
+
+
 ## Writing Compressed Files
 
 ### gzip
@@ -107,6 +157,18 @@ For batch ETLs where throughput matters, `Fastest` is often enough — the bottl
 For archival writes where the output is read rarely, `SmallestSize` (where supported) is worth the extra CPU.
 
 
+## Choosing a Compression Format
+
+| Format | .NET class | Best for |
+|--------|------------|----------|
+| gzip | `GZipStream` | Widest compatibility: `.gz` files, HTTP `Content-Encoding: gzip`, object stores such as S3 |
+| Brotli | `BrotliStream` | Better compression ratio than gzip; built in from .NET Core 2.1 (not available on .NET Framework) |
+| Deflate | `DeflateStream` | Raw deflate data without the gzip header; rarely used on its own |
+| Zstandard | Not in the BCL — community packages | The best speed / ratio trade-off of the four, if both ends can use it |
+
+Any of these that exposes itself as a `Stream` plugs in exactly like the examples above.
+
+
 ## Reading a Compressed HTTP Response
 
 Compression is not limited to files. If an HTTP endpoint returns a compressed body, wrap the response stream the same way:
@@ -138,16 +200,30 @@ This is the full payoff of the stream-based design: a single extractor reads com
 
 ## Important: Dispose in the Right Order
 
-Compression streams buffer output internally. Disposing the wrapper stream flushes its buffer to the underlying stream — **before** the underlying stream is disposed. The `using` ordering in the examples above is correct; reversing it will truncate the output.
+Compression streams buffer output internally, and the compressed data is only complete once the wrapper has been disposed (which writes the final block). Disposing the wrapper also disposes the underlying stream, unless you pass `leaveOpen: true`. So:
+
+- **Dispose the wrapper before the underlying stream.** With `using` declarations that means declaring the underlying stream first, as every example on this page does; `using` disposes in reverse order.
+- **Do not read the output until the wrapper is disposed.** If you wrap a `MemoryStream` and inspect it right after `LoadAsync` returns, the last block is still in the wrapper's buffer.
+- **Use `leaveOpen: true` when you need the underlying stream afterwards**, for example to rewind a `MemoryStream` in a test:
 
 ```csharp
-// WRONG -- file stream disposes first, gzip buffer is lost
-using var gzip = new GZipStream(File.Create("out.gz"), CompressionLevel.Optimal);
+using var buffer = new MemoryStream();
 
-// RIGHT -- file stream disposes last, after gzip has flushed
-using var fileStream = File.Create("out.gz");
-using var gzip = new GZipStream(fileStream, CompressionLevel.Optimal);
+using (var gzip = new GZipStream(buffer, CompressionLevel.Optimal, leaveOpen: true))
+{
+    var loader = new JsonLineLoader<Contact>(gzip);
+    await loader.LoadAsync(contacts, cancellationToken);
+}   // gzip disposed here: final block written, buffer still open
+
+buffer.Position = 0;   // now safe to read the complete .gz bytes
 ```
+
+
+## Tips
+
+- **Compressed streams are not seekable.** `GZipStream`, `BrotliStream` and `DeflateStream` report `CanSeek == false`, so anything that seeks cannot work through them. For example, resuming a `JsonLineExtractor` from a checkpoint (`JsonLineExtractorOptions.StartByteOffset` greater than zero) throws `InvalidOperationException` ("Stream must be seekable ...") on a compressed stream. To resume, decompress to a seekable file first, or restart from the beginning and use `SkipItemCount`.
+- **Compression costs CPU; decompression is cheap.** Decompressing is usually faster than reading the uncompressed bytes from disk or the network, so reading compressed input is often a net win. Writing compressed output costs CPU in proportion to the `CompressionLevel`; see [Choosing a Compression Level](#choosing-a-compression-level).
+- **Buffer the underlying file stream, not the wrapper.** `File.OpenRead` / `File.Create` already buffer; if you build a `FileStream` yourself, give it a reasonably large buffer (64 KB is a good start for batch work).
 
 
 ## See Also
