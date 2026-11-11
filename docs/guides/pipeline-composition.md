@@ -492,7 +492,7 @@ public class PersonToContactTransformerTests
 
 That's the entire test class. The base class runs every contract assertion against it.
 
-For the full TestKit API — contract test base classes, test doubles (`TestExtractor<T>`, `TestLoader<T>`, `TestTransformer<T>`), and the timer injection pattern needed for progress tests — see [TestKit](../reference/testkit.md).
+For the full TestKit API — contract test base classes, test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`), and the timer injection pattern needed for progress tests — see [TestKit](../reference/testkit.md).
 
 ### Integration testing the pipeline
 
