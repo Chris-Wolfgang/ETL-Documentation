@@ -6,9 +6,9 @@ ADO.NET database extractor and loader.
 |---|---|
 | **NuGet** | `Wolfgang.Etl.DbClient` |
 | **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.DbClient) |
-| **Dependencies** | Wolfgang.Etl.Abstractions, Dapper, Microsoft.Extensions.Logging.Abstractions |
-| **Target Frameworks** | net462, net481, netstandard2.0, net8.0, net10.0 |
-| **Source** | [ETL-DbClient](https://github.com/Chris-Wolfgang/ETL-DbClient) |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Dapper, Microsoft.Extensions.Logging.Abstractions, System.Memory |
+| **Target Frameworks** | net462, net472, net48, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net9.0, net10.0 |
+| **Source** | [Etl-DbClient](https://github.com/Chris-Wolfgang/Etl-DbClient) |
 
 ## What it does
 
@@ -25,7 +25,7 @@ Records can be bound via hand-written SQL, parameterized SQL, or auto-generated 
 
 ## When to use something else
 
-- For bulk insert of millions of rows, use the database's native bulk-load API (e.g. `SqlBulkCopy` for SQL Server) rather than row-by-row `INSERT`. A future `Wolfgang.Etl.SqlBulkCopy` library will target this case.
+- For bulk insert of millions of rows, use the database's native bulk-load API (e.g. `SqlBulkCopy` for SQL Server) rather than row-by-row `INSERT`. For SQL Server, [`Wolfgang.Etl.SqlBulkCopy`](https://github.com/Chris-Wolfgang/ETL-SqlBulkCopy) provides `SqlBulkCopyLoader<TRecord>` for exactly this case.
 - For schema migrations, use a migration tool (EF Core migrations, Flyway, DbUp) — this library is for data movement, not schema evolution.
 
 ## Quick example
@@ -34,7 +34,7 @@ Records can be bound via hand-written SQL, parameterized SQL, or auto-generated 
 await using var connection = new SqlConnection(connectionString);
 await connection.OpenAsync(cancellationToken);
 
-var extractor = new DbExtractor<CustomerRecord, DbReport>
+var extractor = new DbExtractor<CustomerRecord>
 (
     connection,
     "SELECT id, first_name, last_name FROM customers WHERE active = @active",
@@ -49,6 +49,6 @@ await foreach (var customer in extractor.ExtractAsync(cancellationToken))
 
 ## More detail
 
-- **API reference** — see the [ETL-DbClient README](https://github.com/Chris-Wolfgang/ETL-DbClient#readme) and XML doc comments on the public types
-- **Examples** — see the [`examples/` folder](https://github.com/Chris-Wolfgang/ETL-DbClient/tree/main/examples) in the source repo
-- **Release notes** — [Releases](https://github.com/Chris-Wolfgang/ETL-DbClient/releases)
+- **API reference** — see the [Etl-DbClient README](https://github.com/Chris-Wolfgang/Etl-DbClient#readme) and XML doc comments on the public types
+- **Examples** — see the [`examples/` folder](https://github.com/Chris-Wolfgang/Etl-DbClient/tree/main/examples) in the source repo
+- **Release notes** — [Releases](https://github.com/Chris-Wolfgang/Etl-DbClient/releases)
