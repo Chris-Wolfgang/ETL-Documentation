@@ -15,7 +15,11 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install -r requirements.txt
+      # --require-hashes, not just the hash-locked requirements.txt: pip only enters
+      # hash-checking mode implicitly while every line carries a hash, so a future
+      # unhashed edit would silently install unpinned. The flag makes that an error
+      # (and satisfies OSSF Scorecard Pinned-Dependencies "pipCommand not pinned by hash").
+      run: pip install --require-hashes -r requirements.txt
 
     - name: Build documentation
       shell: bash
