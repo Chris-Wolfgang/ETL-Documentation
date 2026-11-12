@@ -81,6 +81,11 @@ jobs:
       # Suppressed rules:
       #   CodeReviewID         - solo-maintainer repository; requiring a second approver
       #                          would force admin-bypass on every PR.
+      #   BranchProtectionID   - same reason. main IS protected (the "Protect main branch"
+      #                          ruleset), but the remaining points need required approvers,
+      #                          code-owner review and last-push approval, which a solo
+      #                          maintainer can only meet with an admin bypass, and that
+      #                          waives every rule. repo-template suppresses it too.
       #   CIIBestPracticesID   - bestpractices.dev badge is an external registration.
       #   FuzzingID, SASTID    - this is a documentation-only repository (Markdown plus
       #                          mkdocs config): there is no code to fuzz or to analyse
@@ -89,7 +94,7 @@ jobs:
       - name: Filter suppressed findings from SARIF
         shell: bash
         env:
-          SUPPRESSED_RULES: 'CodeReviewID CIIBestPracticesID FuzzingID SASTID'
+          SUPPRESSED_RULES: 'CodeReviewID BranchProtectionID CIIBestPracticesID FuzzingID SASTID'
         run: |
           set -euo pipefail
           if ! command -v jq >/dev/null 2>&1; then
