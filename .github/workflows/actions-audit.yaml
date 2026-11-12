@@ -43,6 +43,9 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: 'stable'
+          # No go.mod/go.sum here to key a module cache on: with caching on, setup-go
+          # warns "Restore cache failed: Dependencies file is not found" on every run.
+          cache: false
 
       - name: Install actionlint
         run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
