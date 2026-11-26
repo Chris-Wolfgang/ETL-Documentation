@@ -18,7 +18,7 @@ If your use case feels too unusual to be an ETL, it probably still fits the pipe
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.28.0" />
 ```
 
 
@@ -183,6 +183,7 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
                 continue;
             }
 
+            // Covers MaximumItemCount = 0
             if (CurrentItemCount >= MaximumItemCount)
             {
                 break;
@@ -192,6 +193,12 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
             await writer.WriteLineAsync(json).ConfigureAwait(false);
 
             IncrementCurrentItemCount();
+
+            // Stop as soon as the limit is reached, so the item after it is never pulled
+            if (CurrentItemCount >= MaximumItemCount)
+            {
+                break;
+            }
         }
 
         await writer.FlushAsync().ConfigureAwait(false);
@@ -284,7 +291,7 @@ public class JsonLineLoaderTests
 !!! note
     `CreateSut` for loaders creates a fresh `MemoryStream` each time. The `itemCount` parameter tells you how many items will be loaded — useful for loaders that pre-allocate. For a JSONL loader, you can ignore it. Pass the three configuration values straight through: some contract tests use out-of-range values on purpose and expect construction to throw.
 
-Those two factory methods give you the 46 tests of the `LoaderBase` contract.
+Those two factory methods give you the 45 tests of the `LoaderBase` contract.
 
 
 ## Multi-TFM Considerations
@@ -311,7 +318,7 @@ The `LoadWorkerAsync` above uses the four-argument `StreamWriter` constructor, `
 - [ ] Implement `MaximumItemCount` logic
 - [ ] Respect `CancellationToken`
 - [ ] Test class inherits `LoaderBaseContractTests<TSut, TItem, TProgress>` and implements the four-argument `CreateSut`
-- [ ] `CreateSourceItems()` returns at least 5 items
+- [ ] `CreateSourceItems()` returns at least 3 items
 - [ ] Add domain-specific tests for output format and edge cases
 
 
