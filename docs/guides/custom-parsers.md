@@ -13,15 +13,20 @@ The FixedWidth library takes user-supplied delegates in three places:
 | **Value converter** (loader) | Converting a CLR value into its field text | Y/N booleans, currency formatting, enum-to-code |
 | **Header converter** (loader) | Formatting the header label written above each column | Upper-case, centred, padded labels |
 
-Each hook is a delegate assigned to a property on the extractor or loader. The library calls your delegate once per field with context (property type, field width, alignment, etc.) and falls back to the built-in parser/converter when your delegate returns `null`.
+Each hook is a delegate set on the options record you pass to the constructor (`FixedWidthExtractorOptions<TRecord>.ValueParser`, `FixedWidthLoaderOptions.ValueConverter` and `HeaderConverter`, or their `*StreamOptions` counterparts). The settable properties on the extractor and loader themselves are `[Obsolete]`. The library calls your delegate once per field with context (property type, field width, alignment, etc.) and uses whatever it returns: there is no automatic fallback, and a `null` return means the field has no value. To keep the built-in behaviour for the fields you do not handle, call `FixedWidthConverter.DefaultParser` yourself, as below.
 
 Quick example — a value parser that handles `Y`/`N` booleans and defers to the default parser for every other type:
 
 ```csharp
-extractor.ValueParser = (text, ctx) =>
-    ctx.PropertyType == typeof(bool)
-        ? (object)(text.Span.SequenceEqual("Y".AsSpan()))
-        : FixedWidthConverter.DefaultParser(text, ctx);
+var options = new FixedWidthExtractorStreamOptions<MyRecord>
+{
+    ValueParser = (text, ctx) =>
+        ctx.PropertyType == typeof(bool)
+            ? (object)(text.Span.SequenceEqual("Y".AsSpan()))
+            : FixedWidthConverter.DefaultParser(text, ctx),
+};
+
+var extractor = new FixedWidthExtractor<MyRecord>(stream, options, logger);
 ```
 
 For recipes (enum mapping, currency handling, per-field date formats, custom header layouts), see the [ETL-FixedWidth README](https://github.com/Chris-Wolfgang/ETL-FixedWidth#readme).
@@ -78,7 +83,7 @@ For the full set of settings, see the [ETL-Xml README](https://github.com/Chris-
 When you need more than one custom rule inside a single hook — for example, a FixedWidth value parser that handles Y/N booleans, a custom date format on one field, and an enum lookup — use a chain of conditions inside the delegate:
 
 ```csharp
-extractor.ValueParser = (text, ctx) =>
+FixedWidthValueParser parser = (text, ctx) =>
 {
     // Rule 1: Y/N booleans
     if (ctx.PropertyType == typeof(bool))
@@ -109,6 +114,13 @@ extractor.ValueParser = (text, ctx) =>
     // Fallback: default parser
     return FixedWidthConverter.DefaultParser(text, ctx);
 };
+
+var extractor = new FixedWidthExtractor<AccountRecord>
+(
+    stream,
+    new FixedWidthExtractorStreamOptions<AccountRecord> { ValueParser = parser },
+    logger
+);
 ```
 
 The same shape works wherever a library takes a user-supplied delegate (FixedWidth value parsers and converters, custom `JsonConverter<T>` instances, and so on): match on the context, apply your rule, fall through to the library's default.
