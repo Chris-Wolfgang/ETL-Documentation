@@ -40,7 +40,7 @@ public record Address
 
 ## Building the chain
 
-Each step is one transformer from `Wolfgang.Etl.Transformers`. `Then(...)` joins two transformers whose types line up into a single `ITransformAsync<TSource, TDestination>`; the compiler checks every link.
+Each step is one transformer from `Wolfgang.Etl.Transformers`. `Then(...)` joins two transformers whose types line up into a single transformer; the compiler checks every link. When both sides accept a `CancellationToken` (as every transformer here does), the result is an `ITransformWithCancellationAsync<TSource, TDestination>`, so the whole chain can be cancelled.
 
 ```csharp
 using Wolfgang.Etl.Abstractions;
@@ -48,7 +48,7 @@ using Wolfgang.Etl.Transformers;
 
 public static class AddressChain
 {
-    public static ITransformAsync<ErpAddress, ErpAddress> Create()
+    public static ITransformWithCancellationAsync<ErpAddress, ErpAddress> Create()
     {
         // ERP shape -> shared shape (application-specific, small)
         var fromErp = new SelectTransformer<ErpAddress, Address>
@@ -106,12 +106,12 @@ var transformer = AddressChain.Create();
 
 await loader.LoadAsync
 (
-    transformer.TransformAsync(extractor.ExtractAsync(token)),
+    transformer.TransformAsync(extractor.ExtractAsync(token), token),
     token
 );
 ```
 
-`Then(...)` builds a [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) for each link. Construct [`ChainTransformer`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) directly when you prefer explicit types, and use [`ChainTransformerWithCancellation`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformerWithCancellation-3.html) (or the `Then` overload for `ITransformWithCancellationAsync` pairs) when every stage in the chain accepts a `CancellationToken`.
+`Then(...)` builds a [`ChainTransformer<TSource, TIntermediate, TDestination>`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformer-3.html) for each link, or a [`ChainTransformerWithCancellation`](https://chris-wolfgang.github.io/ETL-Transformers/api/Wolfgang.Etl.Transformers.ChainTransformerWithCancellation-3.html) when both sides accept a `CancellationToken`, as in this sample. Construct either class directly when you prefer explicit types.
 
 
 ## Why chain instead of one big transformer
