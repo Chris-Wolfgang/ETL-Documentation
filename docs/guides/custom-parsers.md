@@ -13,7 +13,13 @@ The FixedWidth library takes user-supplied delegates in three places:
 | **Value converter** (loader) | Converting a CLR value into its field text | Y/N booleans, currency formatting, enum-to-code |
 | **Header converter** (loader) | Formatting the header label written above each column | Upper-case, centred, padded labels |
 
-Each hook is a delegate set on the options record you pass to the constructor (`FixedWidthExtractorOptions<TRecord>.ValueParser`, `FixedWidthLoaderOptions.ValueConverter` and `HeaderConverter`, or their `*StreamOptions` counterparts). The settable properties on the extractor and loader themselves are `[Obsolete]`. The library calls your delegate once per field with context (property type, field width, alignment, etc.) and uses whatever it returns: there is no automatic fallback, and a `null` return means the field has no value. To keep the built-in behaviour for the fields you do not handle, call `FixedWidthConverter.DefaultParser` yourself, as below.
+Each hook is a delegate set on the options record you pass to the constructor (`FixedWidthExtractorOptions<TRecord>.ValueParser`, `FixedWidthLoaderOptions.ValueConverter` and `HeaderConverter`, or their `*StreamOptions` counterparts). The settable properties on the extractor and loader themselves are `[Obsolete]`. The library calls your delegate once per field with context (property type, field width, alignment, etc.) and uses whatever it returns: there is no automatic fallback. To keep the built-in behaviour for the fields you do not handle, call the matching default yourself:
+
+| Hook | Delegate type | Built-in default to call |
+|------|---------------|--------------------------|
+| `ValueParser` | `FixedWidthValueParser` (raw text → `object?`; `null` means the field has no value) | `FixedWidthConverter.DefaultParser` |
+| `ValueConverter` | `Func<object, FieldContext, string>` | `FixedWidthConverter.Strict` |
+| `HeaderConverter` | `Func<string, FieldContext, string>` | `FixedWidthConverter.StrictHeader` |
 
 Quick example — a value parser that handles `Y`/`N` booleans and defers to the default parser for every other type:
 

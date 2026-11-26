@@ -183,12 +183,6 @@ Unlike `ExtractWorkerAsync` which returns `IAsyncEnumerable<T>`, `LoadWorkerAsyn
                 continue;
             }
 
-            // Covers MaximumItemCount = 0
-            if (CurrentItemCount >= MaximumItemCount)
-            {
-                break;
-            }
-
             var json = JsonSerializer.Serialize(item, _serializerOptions);
             await writer.WriteLineAsync(json).ConfigureAwait(false);
 

@@ -12,9 +12,9 @@ ADO.NET database extractor and loader.
 
 ## What it does
 
-Streams records from any ADO.NET-compatible database, and writes records back inside a transaction — one command per record by default, or batched with `BatchSize` (several commands per round trip) or `InsertBatchSize` (one multi-row `INSERT … VALUES`). Works with SQL Server, PostgreSQL, SQLite, MySQL, Oracle — anything with a `DbConnection` provider.
+Streams records from any ADO.NET-compatible database, and writes records back inside a transaction — one command per record by default, or batched: `BatchSize` buffers up to N records per Dapper `ExecuteAsync` call, which reuses the command setup but still executes once per record, while `InsertBatchSize` generates one multi-row `INSERT … VALUES` statement. Works with SQL Server, PostgreSQL, SQLite, MySQL, Oracle — anything with a `DbConnection` provider.
 
-Records can be bound via hand-written SQL, parameterized SQL, or auto-generated SELECT/INSERT from `[Table]` and `[Column]` attributes on your record type. By default the caller owns the connection and transaction lifetime: pass an open `DbConnection` and the library never opens, closes, or commits it. Alternatively, construct the extractor or loader from a `DbProviderFactory` and a connection string, or set `ManageConnection`, and it opens and closes the connection itself; the loader then commits on success and rolls back on failure, and `BatchCommitSize` commits every N rows.
+Records can be bound via hand-written SQL, parameterized SQL, or auto-generated SELECT/INSERT from `[Table]` and `[Column]` attributes on your record type. Connection and transaction ownership are separate choices. **Connection:** by default you pass an open `DbConnection` and the library never opens or closes it; alternatively, construct the extractor or loader from a `DbProviderFactory` and a connection string, or set `ManageConnection`, and it opens and closes the connection itself. **Transaction:** pass a `DbTransaction` to the loader and it never commits or rolls back; without one, the loader begins its own transaction, commits on success and rolls back on failure. For a loader-owned transaction with `BatchSize` = 1, `BatchCommitSize` commits every N rows instead — a later failure then rolls back only the current chunk, not the chunks already committed.
 
 ## When to use it
 
