@@ -26,17 +26,19 @@ dotnet add package Microsoft.Data.SqlClient
 The record type matches the columns of the `Employees` table you want to extract:
 
 ```csharp
+using System.ComponentModel.DataAnnotations.Schema; // [Column]
+
 public record Employee
 {
-    public int Id { get; set; }
-    public string? FirstName { get; set; }
-    public string? LastName { get; set; }
-    public string? Email { get; set; }
-    public DateTime HireDate { get; set; }
+    [Column("id")]         public int Id { get; set; }
+    [Column("first_name")] public string? FirstName { get; set; }
+    [Column("last_name")]  public string? LastName { get; set; }
+    [Column("email")]      public string? Email { get; set; }
+    [Column("hire_date")]  public DateTime HireDate { get; set; }
 }
 ```
 
-Property names map to columns by case-insensitive match. Use `record` for value equality and a clean `ToString()` for free.
+Without `[Column]` attributes, a column binds to a property only when the names match ignoring case: `id` binds to `Id` and `email` to `Email`, but `first_name` does **not** bind to `FirstName` — the property is silently left at its default (`null`, or `0001-01-01` for `HireDate`). Once a type has `[Column]` attributes, each attribute names the column its property reads. Aliasing the columns in the SQL (`SELECT first_name AS FirstName, ...`) works too. Use `record` for value equality and a clean `ToString()` for free.
 
 
 ## Step 2: Build a pass-through transformer
