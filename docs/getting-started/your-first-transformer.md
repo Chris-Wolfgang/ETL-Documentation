@@ -142,12 +142,6 @@ This is the core of your transformer. It is an `async` iterator method that cons
                 continue;
             }
 
-            // Handle MaximumItemCount = 0 (the check after yield stops at the limit)
-            if (CurrentItemCount >= MaximumItemCount)
-            {
-                break;
-            }
-
             // Type conversion + validation
             if (!int.TryParse(raw.Quantity, out var quantity) ||
                 !decimal.TryParse(raw.UnitPrice, out var unitPrice))
