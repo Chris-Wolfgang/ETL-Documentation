@@ -76,3 +76,7 @@ nav:
     - File to Database: cookbook/file-to-database.md
     - Database to File: cookbook/database-to-file.md
     - Transform Chains: cookbook/transform-chains.md
+
+validation:
+  links:
+    anchors: warn

@@ -39,8 +39,8 @@ The four extractor interfaces form a diamond — see [Architecture § Interfaces
 |-----------|-------------|
 | [IExtractAsync](#iextractasync) | A method to extract data asynchronously from a source. |
 | [IExtractWithCancellationAsync](#iextractwithcancellationasync) | A method to extract data asynchronously with the ability to cancel. |
-| [IExtractWithProgressAsync](#iextractwithprogressasync) | A method to extract data asynchronously while reporting progress. |
-| [IExtractWithProgressAndCancellationAsync](#iextractwithprogressandcancellationasync) | A method to extract data asynchronously with both progress reporting and cancellation. |
+| [IExtractWithProgressAsync](#iextractwithprogressasynctsource-tprogress) | A method to extract data asynchronously while reporting progress. |
+| [IExtractWithProgressAndCancellationAsync](#iextractwithprogressandcancellationasynctsource-tprogress) | A method to extract data asynchronously with both progress reporting and cancellation. |
 
 
 ### IExtractAsync
@@ -153,7 +153,7 @@ Extracts data from the source by enumerating it asynchronously.
 
 ### Definition
 
-Provides an abstract base class that implements [`IExtractAsync`](#iextractasync), [`IExtractWithCancellationAsync`](#iextractwithcancellationasync), [`IExtractWithProgressAsync`](#iextractwithprogressasync), and [`IExtractWithProgressAndCancellationAsync`](#iextractwithprogressandcancellationasync) with basic functionality, allowing for quickly building user-defined extractors. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#createprogressreport) and [`ExtractWorkerAsync`](#extractworkerasync).
+Provides an abstract base class that implements [`IExtractAsync`](#iextractasync), [`IExtractWithCancellationAsync`](#iextractwithcancellationasync), [`IExtractWithProgressAsync`](#iextractwithprogressasynctsource-tprogress), and [`IExtractWithProgressAndCancellationAsync`](#iextractwithprogressandcancellationasynctsource-tprogress) with basic functionality, allowing for quickly building user-defined extractors. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#methods_4) and [`ExtractWorkerAsync`](#methods_4).
 
 ### Type Parameters
 

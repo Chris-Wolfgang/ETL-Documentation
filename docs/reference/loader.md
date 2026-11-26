@@ -39,8 +39,8 @@ The four loader interfaces form a diamond — see [Architecture § Interfaces](.
 |-----------|-------------|
 | [ILoadAsync](#iloadasync) | A method to load data asynchronously to the destination. |
 | [ILoadWithCancellationAsync](#iloadwithcancellationasync) | A method to load data asynchronously with the ability to cancel. |
-| [ILoadWithProgressAsync](#iloadwithprogressasync) | A method to load data asynchronously while reporting progress. |
-| [ILoadWithProgressAndCancellationAsync](#iloadwithprogressandcancellationasync) | A method to load data asynchronously with both progress reporting and cancellation. |
+| [ILoadWithProgressAsync](#iloadwithprogressasynctdestination-tprogress) | A method to load data asynchronously while reporting progress. |
+| [ILoadWithProgressAndCancellationAsync](#iloadwithprogressandcancellationasynctdestination-tprogress) | A method to load data asynchronously with both progress reporting and cancellation. |
 
 
 ### ILoadAsync
@@ -159,7 +159,7 @@ Asynchronously enumerates the items passed in and writes them to the destination
 
 ### Definition
 
-Provides an abstract base class that implements [`ILoadAsync`](#iloadasync), [`ILoadWithCancellationAsync`](#iloadwithcancellationasync), [`ILoadWithProgressAsync`](#iloadwithprogressasync), and [`ILoadWithProgressAndCancellationAsync`](#iloadwithprogressandcancellationasync) with basic functionality, allowing for quickly building user-defined loaders. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#createprogressreport) and [`LoadWorkerAsync`](#loadworkerasync).
+Provides an abstract base class that implements [`ILoadAsync`](#iloadasync), [`ILoadWithCancellationAsync`](#iloadwithcancellationasync), [`ILoadWithProgressAsync`](#iloadwithprogressasynctdestination-tprogress), and [`ILoadWithProgressAndCancellationAsync`](#iloadwithprogressandcancellationasynctdestination-tprogress) with basic functionality, allowing for quickly building user-defined loaders. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#methods_4) and [`LoadWorkerAsync`](#methods_4).
 
 ### Type Parameters
 
