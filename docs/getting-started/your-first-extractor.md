@@ -170,12 +170,6 @@ This is the core of your extractor. It is an `async` iterator method that yields
                 continue;
             }
 
-            // Covers MaximumItemCount = 0
-            if (CurrentItemCount >= MaximumItemCount)
-            {
-                break;
-            }
-
             IncrementCurrentItemCount();
             yield return item;
 
@@ -196,7 +190,7 @@ The worker uses `ReadLineAsync()` and the five-argument `StreamReader` construct
 
 2. **Implement `SkipItemCount` yourself.** The base class validates it but does not skip for you. Use a local `skipBudget` variable.
 
-3. **Implement `MaximumItemCount` yourself.** Check `CurrentItemCount >= MaximumItemCount` right after counting and yielding an item and `break` when reached, so the record after the limit is never read (and once before the first item, for a limit of 0).
+3. **Implement `MaximumItemCount` yourself.** Check `CurrentItemCount >= MaximumItemCount` right after counting and yielding an item and `break` when reached, so the record after the limit is never read. `MaximumItemCount` is at least 1 (the base class rejects smaller values), so no check is needed before the first item.
 
 4. **Respect the `CancellationToken`.** Call `token.ThrowIfCancellationRequested()` in your loop and pass `token` to any async calls that accept it.
 
