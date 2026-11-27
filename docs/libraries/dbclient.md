@@ -45,7 +45,16 @@ await foreach (var customer in extractor.ExtractAsync(cancellationToken))
 {
     // ...
 }
+
+public record CustomerRecord
+{
+    [Column("id")]         public int Id { get; set; }
+    [Column("first_name")] public string? FirstName { get; set; }
+    [Column("last_name")]  public string? LastName { get; set; }
+}
 ```
+
+`[Column]` (from `System.ComponentModel.DataAnnotations.Schema`) maps each snake_case column to its property. Without it a column binds only to a property whose name matches ignoring case, so `first_name` would not reach `FirstName`.
 
 ## More detail
 
