@@ -8,7 +8,7 @@
 #   winget install gitleaks      # Windows
 #   brew install gitleaks        # macOS
 #   see releases page            # Linux
-# The same scan runs in CI (secrets-scan.yaml, once added), so a missing local
+# The same scan runs in CI (secrets-scan.yaml), so a missing local
 # binary only delays detection; the hook warns and lets the commit through.
 
 set -euo pipefail
