@@ -105,7 +105,7 @@ public static async Task ImportOrdersAsync
 
     await loader.LoadAsync
     (
-        transformer.TransformAsync(extractor.ExtractAsync(token)),
+        transformer.TransformAsync(extractor.ExtractAsync(token), token),
         token
     );
 }
