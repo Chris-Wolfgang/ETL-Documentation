@@ -101,7 +101,11 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 using var fileStream = File.OpenRead("accounts.dat.gz");
 using var gzip = new GZipStream(fileStream, CompressionMode.Decompress);
 
-var extractor = new FixedWidthExtractor<AccountRecord>(gzip, Encoding.GetEncoding("IBM037"));
+var extractor = new FixedWidthExtractor<AccountRecord>
+(
+    gzip,
+    new FixedWidthExtractorStreamOptions<AccountRecord> { Encoding = Encoding.GetEncoding("IBM037") }
+);
 ```
 
 

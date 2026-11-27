@@ -45,8 +45,11 @@ public class CustomerRecord
 }
 
 await using var stream = File.OpenRead("customers.txt");
-using var extractor = new FixedWidthExtractor<CustomerRecord>(stream);
-extractor.HasHeader = true;
+using var extractor = new FixedWidthExtractor<CustomerRecord>
+(
+    stream,
+    new FixedWidthExtractorStreamOptions<CustomerRecord> { HeaderLineCount = 1 }
+);
 
 await foreach (var customer in extractor.ExtractAsync(cancellationToken))
 {
