@@ -10,7 +10,7 @@ By the end you will have a fully tested transformer that demonstrates the typica
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.28.0" />
 ```
 
 
@@ -142,12 +142,6 @@ This is the core of your transformer. It is an `async` iterator method that cons
                 continue;
             }
 
-            // Handle MaximumItemCount
-            if (CurrentItemCount >= MaximumItemCount)
-            {
-                break;
-            }
-
             // Type conversion + validation
             if (!int.TryParse(raw.Quantity, out var quantity) ||
                 !decimal.TryParse(raw.UnitPrice, out var unitPrice))
@@ -170,6 +164,12 @@ This is the core of your transformer. It is an `async` iterator method that cons
 
             IncrementCurrentItemCount();
             yield return line;
+
+            // Stop as soon as the limit is reached, so the item after it is never pulled
+            if (CurrentItemCount >= MaximumItemCount)
+            {
+                break;
+            }
         }
     }
 ```
@@ -205,7 +205,7 @@ No timer plumbing is needed: the base class runs the production timer, and TestK
 
 ### The contract tests apply to same-type transformers
 
-`TransformerBaseContractTests<TSut, TItem, TProgress>` from `Wolfgang.Etl.TestKit.Xunit` requires `TSut : TransformerBase<TItem, TItem, TProgress>` — it feeds items in and expects the same type out, so it fits validators, filters, enrichers and other `T` → `T` transformers. Its 48 tests then come from two factory methods, `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` and `CreateExpectedItems()`, exactly as in [Your First Extractor](your-first-extractor.md#inherit-the-contract-test-base-class).
+`TransformerBaseContractTests<TSut, TItem, TProgress>` from `Wolfgang.Etl.TestKit.Xunit` requires `TSut : TransformerBase<TItem, TItem, TProgress>` — it feeds items in and expects the same type out, so it fits validators, filters, enrichers and other `T` → `T` transformers. Its 47 tests then come from two factory methods, `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` and `CreateExpectedItems()`, exactly as in [Your First Extractor](your-first-extractor.md#inherit-the-contract-test-base-class).
 
 `OrderLineTransformer` changes the type (`RawOrderLine` → `OrderLine`), so test it directly. The contract behaviors worth covering yourself are the ones your worker implements: `SkipItemCount`, `MaximumItemCount`, cancellation, and one `IncrementCurrentItemCount()` per yielded item.
 
@@ -314,7 +314,7 @@ await loader.LoadAsync
 - [ ] Implement `SkipItemCount` logic in your worker method
 - [ ] Implement `MaximumItemCount` logic in your worker method
 - [ ] Respect `CancellationToken` (pass to async calls, call `ThrowIfCancellationRequested`)
-- [ ] Same-type (`T` → `T`) transformer: test class inherits `TransformerBaseContractTests<TSut, TItem, TProgress>`, implements the four-argument `CreateSut`, and `CreateExpectedItems()` returns at least 5 items
+- [ ] Same-type (`T` → `T`) transformer: test class inherits `TransformerBaseContractTests<TSut, TItem, TProgress>`, implements the four-argument `CreateSut`, and `CreateExpectedItems()` returns at least 3 items
 - [ ] Type-changing transformer: direct tests for conversion rules, `SkipItemCount`, `MaximumItemCount` and cancellation
 - [ ] `TSource` and `TDestination` use `record` types for value equality
 - [ ] Add domain-specific tests for transformer-specific behavior (validation rules, computed fields, error policies)

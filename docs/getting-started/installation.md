@@ -5,7 +5,7 @@
 `Wolfgang.Etl.Abstractions` targets a broad matrix and runs on:
 
 - .NET Framework 4.6.2 or later (`net462`, `net472`, `net48` and `net481` assets)
-- .NET 5 or later (`net5.0` through `net10.0` assets)
+- .NET 5 or later (`net5.0` through `net10.0` assets; Abstractions, ErrorPolicies, TestKit, Csv, FixedWidth and Transformers also ship `net11.0`)
 - Any other runtime that supports `netstandard2.0` (for example .NET Core 3.1, which uses the `netstandard2.0` asset and is no longer tested)
 
 You can install a [.NET SDK](https://dotnet.microsoft.com/download) for any of those.
@@ -38,7 +38,7 @@ Each library depends on `Wolfgang.Etl.Abstractions` — it is pulled in automati
 `dotnet add package` records an exact version in your `.csproj`:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Json" Version="0.10.0" />
+<PackageReference Include="Wolfgang.Etl.Json" Version="0.11.0" />
 ```
 
 Pinning an exact version gives you reproducible builds — the same build inputs today and next year produce the same output. This is the recommended default for libraries and applications that value stability over always-latest.
@@ -46,8 +46,8 @@ Pinning an exact version gives you reproducible builds — the same build inputs
 If you want to always pull the latest minor/patch release — useful for internal applications that regularly absorb upstream fixes — replace the `Version` value with a floating reference:
 
 ```xml
-<!-- Any version >= 0.26.1 -->
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.26.1,)" />
+<!-- Any version >= 0.28.0 -->
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="[0.28.0,)" />
 
 <!-- Any version — always latest -->
 <PackageReference Include="Wolfgang.Etl.Abstractions" Version="*" />

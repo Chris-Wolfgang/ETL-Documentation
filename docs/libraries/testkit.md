@@ -6,8 +6,8 @@ Test doubles and contract test base classes for verifying components built on `W
 |---|---|
 | **NuGet** | `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` |
 | **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.TestKit) ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.TestKit.Xunit) |
-| **Dependencies** | Wolfgang.Etl.Abstractions, System.Linq.Async; `Wolfgang.Etl.TestKit.Xunit` additionally references `Wolfgang.Etl.TestKit` and xUnit v2 (`xunit.core` / `xunit.assert` 2.9.3) |
-| **Target Frameworks** | net462, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net10.0 |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Microsoft.Bcl.AsyncInterfaces; `Wolfgang.Etl.TestKit.Xunit` additionally references `Wolfgang.Etl.TestKit`, System.Linq.Async and xUnit v2 (`xunit.core` / `xunit.assert` 2.9.3) |
+| **Target Frameworks** | net462, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net10.0, net11.0 |
 | **Source** | [ETL-Abstractions](https://github.com/Chris-Wolfgang/ETL-Abstractions) (`src/Wolfgang.Etl.TestKit`, `src/Wolfgang.Etl.TestKit.Xunit`); the older ETL-Test-Kit repository is archived |
 
 ## What it does
@@ -45,7 +45,7 @@ public class JsonLineExtractorTests
     private static readonly IReadOnlyList<PersonRecord> ExpectedItems = new List<PersonRecord>
     {
         new() { FirstName = "Alice", LastName = "Smith", Age = 30 },
-        // ...at least 5 items
+        // ...at least 3 items
     };
 
     protected override JsonLineExtractor<PersonRecord> CreateSut

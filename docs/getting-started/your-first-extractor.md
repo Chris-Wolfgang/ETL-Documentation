@@ -7,7 +7,7 @@ This guide walks through building a complete extractor from scratch, using `Json
 Your source project needs:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.26.1" />
+<PackageReference Include="Wolfgang.Etl.Abstractions" Version="0.28.0" />
 ```
 
 Plus whatever libraries your extractor needs to read its format (e.g. `System.Text.Json` for JSON) and, for logging, `Microsoft.Extensions.Logging.Abstractions`.
@@ -170,13 +170,14 @@ This is the core of your extractor. It is an `async` iterator method that yields
                 continue;
             }
 
+            IncrementCurrentItemCount();
+            yield return item;
+
+            // Stop as soon as the limit is reached, so the record after it is never read
             if (CurrentItemCount >= MaximumItemCount)
             {
                 break;
             }
-
-            IncrementCurrentItemCount();
-            yield return item;
         }
     }
 ```
@@ -189,7 +190,7 @@ The worker uses `ReadLineAsync()` and the five-argument `StreamReader` construct
 
 2. **Implement `SkipItemCount` yourself.** The base class validates it but does not skip for you. Use a local `skipBudget` variable.
 
-3. **Implement `MaximumItemCount` yourself.** Check `CurrentItemCount >= MaximumItemCount` before yielding and `break` when reached.
+3. **Implement `MaximumItemCount` yourself.** Check `CurrentItemCount >= MaximumItemCount` right after counting and yielding an item and `break` when reached, so the record after the limit is never read. `MaximumItemCount` is at least 1 (the base class rejects smaller values), so no check is needed before the first item.
 
 4. **Respect the `CancellationToken`.** Call `token.ThrowIfCancellationRequested()` in your loop and pass `token` to any async calls that accept it.
 
@@ -392,7 +393,7 @@ On the older targets, call `token.ThrowIfCancellationRequested()` inside the loo
 - [ ] Implement `MaximumItemCount` logic in your worker method
 - [ ] Respect `CancellationToken` (pass to async calls, call `ThrowIfCancellationRequested`)
 - [ ] Test class inherits `ExtractorBaseContractTests<TSut, TItem, TProgress>` and implements the four-argument `CreateSut`
-- [ ] `CreateExpectedItems()` returns at least 5 items
+- [ ] `CreateExpectedItems()` returns at least 3 items
 - [ ] Items use `record` types for value equality
 - [ ] Add domain-specific tests for format-specific behavior
 

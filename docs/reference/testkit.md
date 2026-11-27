@@ -6,8 +6,8 @@ API reference for the `Wolfgang.Etl.TestKit` and `Wolfgang.Etl.TestKit.Xunit` pa
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `Wolfgang.Etl.TestKit` | 0.26.1 | Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`, fault / delay / retry / snapshot doubles) and deterministic timing helpers (`ManualProgressTimerCore`, `ManualTimeSource`) |
-| `Wolfgang.Etl.TestKit.Xunit` | 0.26.1 | Contract test base classes for xUnit, plus `ManualProgressTimer`, `SynchronousProgress<T>`, `ProgressCapture<T>` and `ProgressAssert` |
+| `Wolfgang.Etl.TestKit` | 0.28.0 | Test doubles (`TestExtractor<T>`, `TestTransformer<T>`, `TestLoader<T>`, fault / delay / retry / snapshot doubles) and deterministic timing helpers (`ManualProgressTimerCore`, `ManualTimeSource`) |
+| `Wolfgang.Etl.TestKit.Xunit` | 0.28.0 | Contract test base classes for xUnit, plus `ManualProgressTimer`, `SynchronousProgress<T>`, `ProgressCapture<T>` and `ProgressAssert` |
 
 
 ## Why Use TestKit?
@@ -20,7 +20,7 @@ When you build a custom extractor, transformer, or loader, the base classes in `
 4. Progress reporting works
 5. Configuration values out of range are rejected at construction
 
-The contract test base classes in `TestKit.Xunit` test **all of this automatically**. You implement two factory methods, and the base class provides more than 40 test cases (43 for extractors, 46 for loaders, 48 for transformers) that verify your implementation against the contract.
+The contract test base classes in `TestKit.Xunit` test **all of this automatically**. You implement two factory methods, and the base class provides more than 40 test cases (43 for extractors, 45 for loaders, 47 for transformers) that verify your implementation against the contract.
 
 
 ## Contract Test Base Classes
@@ -34,7 +34,7 @@ Use this base class to test any class that inherits from `ExtractorBase<TSource,
 | Method | Description |
 |--------|-------------|
 | `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` | Create an instance of your extractor that yields exactly `itemCount` items, configured with the three values (pass them straight through to your options record without validating them — some tests pass out-of-range values on purpose and expect construction to throw `ArgumentOutOfRangeException`) |
-| `CreateExpectedItems()` | Return a list of **at least 5** expected items with value equality; the first `itemCount` of them are what `CreateSut` must yield |
+| `CreateExpectedItems()` | Return a list of **at least 3** expected items with value equality; the first `itemCount` of them are what `CreateSut` must yield |
 
 #### Optional and Deprecated Members
 
@@ -67,7 +67,7 @@ Use this base class to test any class that inherits from `LoaderBase<TDestinatio
 | Method | Description |
 |--------|-------------|
 | `CreateSut(int itemCount, int maximumItemCount, int skipItemCount, int reportingInterval)` | Create an instance of your loader configured with the three values (`itemCount` says how many items will be loaded) |
-| `CreateSourceItems()` | Return a list of **at least 5** source items with value equality |
+| `CreateSourceItems()` | Return a list of **at least 3** source items with value equality |
 
 `CreateSut(int itemCount)` and the deprecated `CreateSutWithTimer` work as for extractors.
 
@@ -98,7 +98,7 @@ Same pattern as the extractor tests, for a `TransformerBase<TItem, TItem, TProgr
 | `DisposableStageContractTests<TSut>` | `Dispose` / `DisposeAsync` behaviour, and that a disposed stage throws `ObjectDisposedException` |
 | `ErrorHandlingContractTests<TSut>` | The per-item error hook (`OnItemError` / `HandleItemError`, `CurrentErrorItemCount`) |
 | `RetryContractTests<TSut>` | A `WrapWorkerExecution` retry override recovers from a transient fault and gives up on a permanent one |
-| `IdempotentExtractorContractTests<TSut, TItem, TProgress>`, `IdempotentLoaderContractTests<TSut, TItem>`, `IdempotentTransformerContractTests<TSut, TItem>` | Running the stage twice produces the same result |
+| `IdempotentExtractorContractTests<TSut, TItem, TProgress>`, `IdempotentLoaderContractTests<TSut, TItem, TProgress>`, `IdempotentTransformerContractTests<TSut, TItem, TProgress>` (the two-parameter loader and transformer forms are `[Obsolete]`) | Running the stage twice produces the same result |
 | `AllocationBudgetContractTests<TSut>` | The hot path stays within a declared per-item allocation budget |
 | `SupportsDryRunContractTests` | A stage in dry-run mode runs its pipeline without the destination side effect |
 | `EtlPipelineContractTests<TItem, TProgress>` | Composition through `EtlPipeline.Create().From(...).To(...).RunAsync()` and the `EtlPipelineProgress` it reports |
@@ -172,7 +172,7 @@ public class JsonLineExtractorTests
         JsonReport
     >
 {
-    // At least 5 items required by the contract base
+    // At least 3 items required by the contract base
     private static readonly IReadOnlyList<PersonRecord> ExpectedItems = new List<PersonRecord>
     {
         new() { FirstName = "Alice", LastName = "Smith", Age = 30 },
@@ -253,8 +253,8 @@ With just the two factory methods, the base class provides the full `ExtractorBa
 In your test project `.csproj`:
 
 ```xml
-<PackageReference Include="Wolfgang.Etl.TestKit" Version="0.26.1" />
-<PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.26.1" />
+<PackageReference Include="Wolfgang.Etl.TestKit" Version="0.28.0" />
+<PackageReference Include="Wolfgang.Etl.TestKit.Xunit" Version="0.28.0" />
 <PackageReference Include="xunit" Version="2.9.3" />
 <!-- net8.0 and later: runner 3.x. Test projects that also target net462 to net7.0: 2.8.2 -->
 <PackageReference Include="xunit.runner.visualstudio" Version="3.0.1" />
