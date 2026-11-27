@@ -88,7 +88,7 @@ public static async Task ExportCustomersAsync
 
     await loader.LoadAsync
     (
-        transformer.TransformAsync(extractor.ExtractAsync(token)),
+        transformer.TransformAsync(extractor.ExtractAsync(token), token),
         token
     );
 }

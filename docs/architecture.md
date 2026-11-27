@@ -107,8 +107,8 @@ All `TRecord`/`TSource`/`TDestination` type parameters require `notnull`. Use cl
 | Class | Tests |
 |-------|-------|
 | [`ExtractorBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 43 tests verifying the ExtractorBase contract |
-| [`LoaderBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 46 tests verifying the LoaderBase contract |
-| [`TransformerBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 48 tests verifying the TransformerBase contract |
+| [`LoaderBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 45 tests verifying the LoaderBase contract |
+| [`TransformerBaseContractTests<TSut, TItem, TProgress>`](reference/testkit.md) | 47 tests verifying the TransformerBase contract |
 
 `TestKit.Xunit` also has opt-in contracts for cancellation promptness, disposal, error handling, retry, idempotency, allocation budgets, dry-run and `EtlPipeline` composition — see the [TestKit reference](reference/testkit.md#other-contract-test-base-classes).
 
@@ -118,7 +118,7 @@ Implement two factory methods (`CreateSut(itemCount, maximumItemCount, skipItemC
 
 | Project Type | Target Frameworks |
 |-------------|-------------------|
-| Source libraries | `net462;net481;netstandard2.0;net5.0;net6.0;net7.0;net8.0;net10.0` (Json, Xml, FixedWidth, SqlBulkCopy, TestKit); Abstractions, ErrorPolicies, DbClient and Transformers add `net472;net48;net9.0`; Csv targets `net462;netstandard2.0;netstandard2.1;net5.0;net6.0;net7.0;net8.0;net10.0` |
+| Source libraries | `net462;net481;netstandard2.0;net5.0;net6.0;net7.0;net8.0;net10.0` (Json, Xml, SqlBulkCopy), plus `net11.0` for FixedWidth and TestKit; DbClient adds `net472;net48;net9.0`; Abstractions, ErrorPolicies and Transformers add `net472;net48;net9.0;net11.0`; Csv targets `net462;netstandard2.0;netstandard2.1;net5.0;net6.0;net7.0;net8.0;net10.0;net11.0` |
 | Test projects | `net462;net47;net471;net472;net48;net481;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0` |
 
 Source libraries target `netstandard2.0` for maximum compatibility, .NET Framework TFMs so they are tested on .NET Framework directly, and each modern .NET TFM so newer APIs (span-based and cancellation-aware overloads) are used where they exist. Test projects target the full matrix to verify behavior across all supported runtimes.

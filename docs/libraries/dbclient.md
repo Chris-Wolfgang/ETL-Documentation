@@ -6,20 +6,20 @@ ADO.NET database extractor and loader.
 |---|---|
 | **NuGet** | `Wolfgang.Etl.DbClient` |
 | **Version** | ![NuGet](https://img.shields.io/nuget/v/Wolfgang.Etl.DbClient) |
-| **Dependencies** | Wolfgang.Etl.Abstractions, Dapper, Microsoft.Extensions.Logging.Abstractions, System.Memory |
+| **Dependencies** | Wolfgang.Etl.Abstractions, Dapper, Microsoft.Extensions.Logging.Abstractions, System.ComponentModel.Annotations, Microsoft.Bcl.AsyncInterfaces (older targets) |
 | **Target Frameworks** | net462, net472, net48, net481, netstandard2.0, net5.0, net6.0, net7.0, net8.0, net9.0, net10.0 |
 | **Source** | [Etl-DbClient](https://github.com/Chris-Wolfgang/Etl-DbClient) |
 
 ## What it does
 
-Streams records from any ADO.NET-compatible database, and writes records back one command at a time inside a transaction. Works with SQL Server, PostgreSQL, SQLite, MySQL, Oracle — anything with a `DbConnection` provider.
+Streams records from any ADO.NET-compatible database, and writes records back inside a transaction — one command per record by default, or batched: `BatchSize` buffers up to N records per Dapper `ExecuteAsync` call, which reuses the command setup but still executes once per record, while `InsertBatchSize` generates one multi-row `INSERT … VALUES` statement. Works with SQL Server, PostgreSQL, SQLite, MySQL, Oracle — anything with a `DbConnection` provider.
 
-Records can be bound via hand-written SQL, parameterized SQL, or auto-generated SELECT/INSERT from `[Table]` and `[Column]` attributes on your record type. The caller owns the connection and transaction lifetime; the library never opens, closes, or commits on its own.
+Records can be bound via hand-written SQL, parameterized SQL, or auto-generated SELECT/INSERT from `[Table]` and `[Column]` attributes on your record type. Connection and transaction ownership are separate choices. **Connection:** by default you pass an open `DbConnection` and the library never opens or closes it; alternatively, construct the extractor or loader from a `DbProviderFactory` and a connection string, or set `ManageConnection`, and it opens and closes the connection itself. **Transaction:** pass a `DbTransaction` to the loader and it never commits or rolls back; without one, the loader begins its own transaction, commits on success and rolls back on failure. For a loader-owned transaction with `BatchSize` = 1, `BatchCommitSize` commits every N rows instead — a later failure then rolls back only the current chunk, not the chunks already committed.
 
 ## When to use it
 
 - **Reading from a database** as the source of an ETL pipeline (any relational DB with ADO.NET support)
-- **Writing to a database** as the destination — either row-by-row INSERT, or a `WriteMode` that builds UPSERT / MERGE logic
+- **Writing to a database** as the destination — `WriteMode.Insert` (the default) or `WriteMode.Update`; there is no upsert or merge mode
 - When you want **transaction isolation control** — the loader respects a caller-supplied `DbTransaction`
 - When you want **result-set streaming** rather than buffering the whole query result in memory
 
@@ -45,7 +45,16 @@ await foreach (var customer in extractor.ExtractAsync(cancellationToken))
 {
     // ...
 }
+
+public record CustomerRecord
+{
+    [Column("id")]         public int Id { get; set; }
+    [Column("first_name")] public string? FirstName { get; set; }
+    [Column("last_name")]  public string? LastName { get; set; }
+}
 ```
+
+`[Column]` (from `System.ComponentModel.DataAnnotations.Schema`) maps each snake_case column to its property. Without it a column binds only to a property whose name matches ignoring case, so `first_name` would not reach `FirstName`.
 
 ## More detail
 

@@ -39,20 +39,27 @@ var extractor = new FixedWidthExtractor<MyRecord>(reader, logger);
 
 ### Use SkipItemCount and MaximumItemCount instead of LINQ
 
-The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside `ExtractWorkerAsync` / `LoadWorkerAsync`, where they can short-circuit the read loop and avoid reading or processing items that will be discarded. Set them through the stage's options record when you construct it.
+The base class properties `SkipItemCount` and `MaximumItemCount` are implemented inside each component's worker (`ExtractWorkerAsync`, `TransformWorkerAsync`, `LoadWorkerAsync`). Set them through the stage's options record when you construct it. Compared with LINQ's `Skip()` / `Take()` on the output:
 
-LINQ's `Skip()` and `Take()` operators, by contrast, still enumerate through the skipped items — they just discard them after extraction:
+- **The stage counts them.** Skipped items show up in `CurrentSkippedItemCount` and in progress reports; items dropped by `Skip()` downstream are invisible to the stage.
+- **No extra package.** On targets below .NET 10, `Skip()` / `Take()` over `IAsyncEnumerable<T>` need the `System.Linq.Async` package.
+- **A component can skip cheaply where its source allows it.** A database extractor can push the skip into the query, for example. Whether skipped items are still read or parsed depends on the component: `JsonLineExtractor` deserializes every line before consulting the skip budget, so that blank, malformed or `null` lines do not use it up.
+
+`MaximumItemCount` and `Take()` both stop pulling from the source once the limit is reached.
 
 ```csharp
-// Good: skips at the source level — lines are read but not parsed
+// Preferred: the extractor skips and limits, and reports the skipped count
 var extractor = new JsonLineExtractor<MyRecord>
 (
     stream,
     new JsonLineExtractorOptions { SkipItemCount = 1000, MaximumItemCount = 500 }
 );
 
-// Bad: parses all 1000 skipped records before discarding them
-var items = extractor.ExtractAsync(cancellationToken)
+// Same items from an extractor without the options, but the 1000 skipped records
+// are not counted by the stage, and System.Linq.Async is needed below .NET 10
+var plainExtractor = new JsonLineExtractor<MyRecord>(stream);
+var items = plainExtractor
+    .ExtractAsync(cancellationToken)
     .Skip(1000)
     .Take(500);
 ```

@@ -38,8 +38,8 @@ The four transformer interfaces form a diamond — see [Architecture § Interfac
 |-----------|-------------|
 | [ITransformAsync](#itransformasync) | A method to transform data asynchronously from source to destination. |
 | [ITransformWithCancellationAsync](#itransformwithcancellationasync) | A method to transform data asynchronously with the ability to cancel. |
-| [ITransformWithProgressAsync](#itransformwithprogressasync) | A method to transform data asynchronously while reporting progress. |
-| [ITransformWithProgressAndCancellationAsync](#itransformwithprogressandcancellationasync) | A method to transform data asynchronously with both progress reporting and cancellation. |
+| [ITransformWithProgressAsync](#itransformwithprogressasynctsource-tdestination-tprogress) | A method to transform data asynchronously while reporting progress. |
+| [ITransformWithProgressAndCancellationAsync](#itransformwithprogressandcancellationasynctsource-tdestination-tprogress) | A method to transform data asynchronously with both progress reporting and cancellation. |
 
 
 ### ITransformAsync
@@ -166,7 +166,7 @@ Transforms data from the source format to the destination format by enumerating 
 
 ### Definition
 
-Provides an abstract base class that implements [`ITransformAsync`](#itransformasync), [`ITransformWithCancellationAsync`](#itransformwithcancellationasync), [`ITransformWithProgressAsync`](#itransformwithprogressasync), and [`ITransformWithProgressAndCancellationAsync`](#itransformwithprogressandcancellationasync) with basic functionality, allowing for quickly building user-defined transformers. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#createprogressreport) and [`TransformWorkerAsync`](#transformworkerasync).
+Provides an abstract base class that implements [`ITransformAsync`](#itransformasync), [`ITransformWithCancellationAsync`](#itransformwithcancellationasync), [`ITransformWithProgressAsync`](#itransformwithprogressasynctsource-tdestination-tprogress), and [`ITransformWithProgressAndCancellationAsync`](#itransformwithprogressandcancellationasynctsource-tdestination-tprogress) with basic functionality, allowing for quickly building user-defined transformers. This abstract class only requires that you implement two methods: [`CreateProgressReport`](#methods_4) and [`TransformWorkerAsync`](#methods_4).
 
 ### Type Parameters
 
